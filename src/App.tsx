@@ -1,18 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import quotesData from './data/quotes.json'
+import { fallbackQuotes, loadQuotes } from './quotes-api'
+import type { Quote } from './types'
 import './App.css'
 
-type Quote = {
-  id: string
-  text: string
-  bookTitle: string
-  author: string
-  language: 'en' | 'de'
-  sourceFile: string
-}
-
-const quotes = quotesData as Quote[]
-const englishQuotes = quotes.filter((quote) => quote.language === 'en')
 const CURRENT_QUOTE_KEY = 'supernote-quote-current-id'
 const LEGACY_LANGUAGE_KEY = 'supernote-quote-language'
 
@@ -27,7 +17,12 @@ function pickRandomQuote(availableQuotes: Quote[], currentId?: string) {
   return candidates[index]
 }
 
-function readInitialQuoteId() {
+function getEnglishQuotes(quotes: Quote[]) {
+  return quotes.filter((quote) => quote.language === 'en')
+}
+
+function readInitialQuoteId(quotes: Quote[]) {
+  const englishQuotes = getEnglishQuotes(quotes)
   const storedQuoteId = window.localStorage.getItem(CURRENT_QUOTE_KEY) ?? undefined
 
   if (storedQuoteId && englishQuotes.some((quote) => quote.id === storedQuoteId)) {
@@ -38,12 +33,15 @@ function readInitialQuoteId() {
 }
 
 function App() {
-  const [currentQuoteId, setCurrentQuoteId] = useState<string | undefined>(() => readInitialQuoteId())
+  const [quotes, setQuotes] = useState<Quote[]>(fallbackQuotes)
+  const [currentQuoteId, setCurrentQuoteId] = useState<string | undefined>(() => readInitialQuoteId(fallbackQuotes))
   const [history, setHistory] = useState<string[]>([])
+
+  const englishQuotes = useMemo(() => getEnglishQuotes(quotes), [quotes])
 
   const currentQuote = useMemo(() => {
     return englishQuotes.find((quote) => quote.id === currentQuoteId)
-  }, [currentQuoteId])
+  }, [currentQuoteId, englishQuotes])
 
   const currentIndex = currentQuote ? englishQuotes.findIndex((quote) => quote.id === currentQuote.id) : -1
   const quoteLengthClass = currentQuote
@@ -56,6 +54,33 @@ function App() {
 
   useEffect(() => {
     window.localStorage.removeItem(LEGACY_LANGUAGE_KEY)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    loadQuotes()
+      .then((loadedQuotes) => {
+        if (cancelled) {
+          return
+        }
+
+        const nextEnglishQuotes = getEnglishQuotes(loadedQuotes)
+        setQuotes(loadedQuotes)
+        setCurrentQuoteId((previousQuoteId) => {
+          const currentStillExists = previousQuoteId
+            ? nextEnglishQuotes.some((quote) => quote.id === previousQuoteId)
+            : false
+
+          return currentStillExists ? previousQuoteId : pickRandomQuote(nextEnglishQuotes)?.id
+        })
+        setHistory([])
+      })
+      .catch(() => undefined)
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
@@ -75,7 +100,7 @@ function App() {
 
     setHistory((previousHistory) => (currentQuote ? [...previousHistory, currentQuote.id] : previousHistory))
     setCurrentQuoteId(nextQuote.id)
-  }, [currentQuote])
+  }, [currentQuote, englishQuotes])
 
   const showPreviousQuote = useCallback(() => {
     setHistory((previousHistory) => {
