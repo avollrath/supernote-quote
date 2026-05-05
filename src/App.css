@@ -16,8 +16,8 @@
   margin: 0;
   color: #161512;
   font-family:
+    'Averia Serif Libre',
     Georgia,
-    'Times New Roman',
     serif;
   font-size: clamp(1.6rem, 3.5vw, 4rem);
   line-height: 1.12;
@@ -68,8 +68,8 @@
   background: rgba(22, 21, 18, 0.04);
   color: rgba(22, 21, 18, 0.38);
   font:
-    1.6rem/1 Georgia,
-    'Times New Roman',
+    1.6rem/1 'Averia Serif Libre',
+    Georgia,
     serif;
   cursor: pointer;
   transform: translateY(-50%);
