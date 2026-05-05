@@ -7,7 +7,29 @@
   padding: 4rem 6rem;
 }
 
+.quote-app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: url('./images/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.quote-app::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(rgba(252, 248, 239, 0.76), rgba(252, 248, 239, 0.68)),
+    radial-gradient(circle at 50% 50%, rgba(252, 248, 239, 0.45), rgba(252, 248, 239, 0.78));
+}
+
 .quote-stage {
+  position: relative;
   width: min(84vw, 1200px);
   text-align: center;
 }
@@ -22,6 +44,7 @@
   font-size: clamp(1.6rem, 3.5vw, 4rem);
   line-height: 1.12;
   text-wrap: pretty;
+  text-shadow: 0 1px 20px rgba(252, 248, 239, 0.58);
 }
 
 .quote-text-medium {
@@ -38,14 +61,14 @@
 .quote-source {
   max-width: min(76vw, 980px);
   margin: 1.75rem auto 0;
-  color: rgba(22, 21, 18, 0.58);
+  color: rgba(22, 21, 18, 0.7);
   font-size: 0.92rem;
   line-height: 1.4;
 }
 
 .quote-counter {
   margin: 1.1rem 0 0;
-  color: rgba(22, 21, 18, 0.32);
+  color: rgba(22, 21, 18, 0.46);
   font-size: 0.78rem;
 }
 
@@ -65,8 +88,9 @@
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: rgba(22, 21, 18, 0.04);
-  color: rgba(22, 21, 18, 0.38);
+  background: rgba(252, 248, 239, 0.42);
+  color: rgba(22, 21, 18, 0.58);
+  backdrop-filter: blur(8px);
   font:
     1.6rem/1 'Averia Serif Libre',
     Georgia,
@@ -82,7 +106,7 @@
 .nav-button:hover:not(:disabled),
 .nav-button:focus-visible {
   background: rgba(22, 21, 18, 0.08);
-  color: rgba(22, 21, 18, 0.72);
+  color: rgba(22, 21, 18, 0.82);
 }
 
 .nav-button:focus-visible {
