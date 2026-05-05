@@ -13,6 +13,7 @@
     "dev:full": "concurrently \"npm:server\" \"vite --host 127.0.0.1 --port 5176 --strictPort\""
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.105.3",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "react": "^19.2.5",
