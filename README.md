@@ -100,11 +100,11 @@ npm run preview
 
 ## Deployment
 
-The GitHub Actions workflow at [.github/workflows/deploy.yml](.github/workflows/deploy.yml) runs on pushes to `main`, installs dependencies with `npm ci`, builds the Vite app, and deploys `dist` to GitHub Pages.
+The GitHub Actions workflow at [.github/workflows/deploy.yml](.github/workflows/deploy.yml) runs on pushes to `main`, installs dependencies with `npm ci`, builds the Vite app, and publishes `dist` to the `gh-pages` branch.
 
 Vite is configured with `base: "/supernote-quote/"`, and routing is hash-based so the admin URL is safe on static hosting. The deployed admin screen cannot edit quotes because GitHub Pages cannot run the local Express backend.
 
-In the repository settings, GitHub Pages should use `GitHub Actions` as its build and deployment source. The deploy workflow also runs `actions/configure-pages` before uploading the static artifact, and it can be started manually from the Actions tab with `workflow_dispatch`.
+In the repository settings, GitHub Pages should use `Deploy from a branch` with the `gh-pages` branch and `/ (root)` folder. The workflow can also be started manually from the Actions tab with `workflow_dispatch`.
 
 ## Project Structure
 
