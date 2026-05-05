@@ -337,6 +337,7 @@
 }
 
 .admin-search,
+.admin-filter,
 .quote-editor label,
 .admin-login label {
   display: grid;
@@ -346,6 +347,7 @@
 }
 
 .admin-search input,
+.admin-filter select,
 .quote-editor input,
 .quote-editor textarea,
 .admin-login input {
@@ -356,6 +358,10 @@
   color: #161512;
   background: rgba(255, 255, 255, 0.62);
   font: inherit;
+}
+
+.admin-filter {
+  min-width: 10rem;
 }
 
 .admin-count,

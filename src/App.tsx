@@ -75,6 +75,10 @@ function sliderValueToConfig(value: number): AppConfig {
   }
 }
 
+function isQuoteVisibleByConfig(quote: Quote, config: AppConfig) {
+  return quote.language === 'en' && (config.displayQuoteMaxLength === null || quote.text.length <= config.displayQuoteMaxLength)
+}
+
 function formatQuoteForDisplay(text: string) {
   const spacedText = text.replace(/([,.:])(?=\S)/g, '$1 ')
   const trimmedText = spacedText.trim()
@@ -123,6 +127,7 @@ function AdminPage({
   onConfigChange,
 }: AdminPageProps) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'displayed' | 'filtered'>('all')
   const [editingId, setEditingId] = useState<string | undefined>()
   const [draft, setDraft] = useState<QuoteUpdate>({ text: '', bookTitle: '', author: '' })
   const [displayQuoteMaxLengthDraft, setDisplayQuoteMaxLengthDraft] = useState(() => configToSliderValue(config))
@@ -134,18 +139,29 @@ function AdminPage({
     () => getDisplayableQuotes(quotes, sliderValueToConfig(displayQuoteMaxLengthDraft)).length,
     [displayQuoteMaxLengthDraft, quotes],
   )
+  const draftConfig = useMemo(() => sliderValueToConfig(displayQuoteMaxLengthDraft), [displayQuoteMaxLengthDraft])
 
   const filteredQuotes = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
+    const visibilityMatches = (quote: Quote) => {
+      if (visibilityFilter === 'all') {
+        return true
+      }
 
-    if (!normalizedSearch) {
-      return quotes
+      const isDisplayed = isQuoteVisibleByConfig(quote, draftConfig)
+      return visibilityFilter === 'displayed' ? isDisplayed : !isDisplayed
     }
 
-    return quotes.filter((quote) => {
+    const searchMatches = (quote: Quote) => {
+      if (!normalizedSearch) {
+        return true
+      }
+
       return [quote.text, quote.bookTitle, quote.author].some((value) => value.toLowerCase().includes(normalizedSearch))
-    })
-  }, [quotes, searchTerm])
+    }
+
+    return quotes.filter((quote) => visibilityMatches(quote) && searchMatches(quote))
+  }, [draftConfig, quotes, searchTerm, visibilityFilter])
 
   function startEditing(quote: Quote) {
     setEditingId(quote.id)
@@ -271,6 +287,17 @@ function AdminPage({
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Search text, title, or author"
               />
+            </label>
+            <label className="admin-filter">
+              <span>Show</span>
+              <select
+                value={visibilityFilter}
+                onChange={(event) => setVisibilityFilter(event.target.value as typeof visibilityFilter)}
+              >
+                <option value="all">All</option>
+                <option value="displayed">Displayed</option>
+                <option value="filtered">Filtered out</option>
+              </select>
             </label>
             <p className="admin-count">
               {filteredQuotes.length} / {quotes.length} quotes
