@@ -2,123 +2,112 @@
 
 ![Preview](src/images/preview.jpg)
 
-A minimal static quote display built from a Supernote highlights export.
+> *"Sententia"* — Latin for thought, opinion, or maxim.
 
-GitHub Pages hosts Sententia as static files. The deployed app reads the bundled [src/data/quotes.json](src/data/quotes.json) and [src/data/config.json](src/data/config.json) files only. Quote editing and display configuration are intentionally local: run the local backend, edit quotes or settings in the admin UI, then commit and push the changed JSON files.
+A minimal quote display built from my personal reading highlights. I use a [Supernote Nomad](https://supernote.com) e-ink reader, which has a lovely feature: highlighted passages from any ebook are automatically collected into a digest page. The problem is that browsing them on e-ink is slow and a bit cumbersome. Sententia is the fix — a clean, fast second home for those quotes, always ready on any screen.
 
-## Public Quote Display
+---
 
-- English-only quote rotation for now
-- Random next quote with previous-history navigation
-- Keyboard shortcuts: `ArrowRight` or `Space` for next, `ArrowLeft` for previous
-- Current quote persistence in `localStorage`
-- Full-screen `src/images/background.jpg` with a readable overlay
-- Averia Serif Libre typography via Google Fonts, with Georgia/serif fallbacks
-- Static data from `src/data/quotes.json`
-- Static display settings from `src/data/config.json`
+## What It Does
 
-## Local Quote Editing
+The deployed app is intentionally simple: one quote at a time, full-screen, with a readable overlay on a background image. Navigate forward and backward through your highlights, and the app remembers where you left off.
 
-Editing is available only while the local JSON-writing backend is running:
+**Public display**
+- Random quote rotation with previous-history navigation
+- Keyboard shortcuts: `→` or `Space` for next, `←` for previous
+- Last-viewed quote persists in `localStorage`
+- English-only pool for now (German quotes are stored and ready for a future toggle)
+- Full-screen background with Averia Serif Libre typography via Google Fonts
 
-```bash
-npm run dev:full
-```
+**Local quote editor**
+- Admin UI available when running the local backend
+- Search and filter by text, author, or book
+- Edit quote text and metadata, or delete entries
+- Slider to set a max display length (60–1000 chars, or unlimited) — useful for keeping the public view readable
+- All edits write directly to the JSON source files
 
-Then open:
+---
 
-```text
-http://127.0.0.1:5176/supernote-quote/#/admin
-```
+## How It Works
 
-The admin UI calls the local API and writes changes directly to [src/data/quotes.json](src/data/quotes.json) and [src/data/config.json](src/data/config.json). After editing, commit and push those files so GitHub Pages deploys the updated static data.
+### Data pipeline
 
-The admin setting for displayed quote length filters the public quote pool. Quotes longer than the selected maximum are hidden entirely. `Unlimited` is stored as `null` in `config.json`; finite values are integers from `60` through `1000`.
-
-If the backend is not running, `#/admin` shows:
-
-```text
-Admin editing is only available locally. Run npm run dev:full.
-```
-
-## Data Pipeline
-
-The raw Supernote export is preserved at [data/raw/Documents.txt](data/raw/Documents.txt). Quotes are manually cleaned into [data/raw/quotes_normalized.txt](data/raw/quotes_normalized.txt), then the parser at [scripts/parse-supernote-quotes.ts](scripts/parse-supernote-quotes.ts) transforms that curated file into [src/data/quotes.json](src/data/quotes.json).
-
-`quotes_normalized.txt` uses one strict format:
+Highlights are exported from the Supernote as a plain-text file. I manually clean them into a strict two-line format:
 
 ```text
 Quote text
 Book Title - Author Name
 ```
 
-Entries are separated by a blank line. During parsing, the script:
+A TypeScript parser then transforms that file into structured JSON — detecting language, formatting long quotes into readable line breaks, removing duplicates, and sorting by book and quote text.
 
-- Reads exactly two lines per entry from `quotes_normalized.txt`
-- Splits the source line on the first ` - ` into title and author
-- Formats long quotes with readable line breaks
-- Detects English vs German and keeps the `language` field for future use
-- Removes exact duplicate quote text
-- Truncates extremely long display text while preserving `fullText`
-- Sorts the output by book title and quote text
+### Editing workflow
 
-## Commands
-
-Install dependencies:
+The app is static by design. To edit quotes:
 
 ```bash
-npm install
+npm run dev:full   # starts Express backend + Vite frontend
 ```
 
-Run the public app only:
+Then open `http://127.0.0.1:5176/supernote-quote/#/admin`, make changes in the UI, and commit the updated JSON files. GitHub Actions handles the rest.
 
-```bash
-npm run dev
-```
+### Deployment
 
-Run the public app plus local quote editor backend:
+Every push to `main` triggers a GitHub Actions build that publishes the `dist` folder to GitHub Pages. No server required in production — just static files.
 
-```bash
-npm run dev:full
-```
+---
 
-Parse the Supernote export:
+## Tech Stack
 
-```bash
-npm run parse:quotes
-```
+| Layer | Choice |
+|-------|--------|
+| Frontend | React 19 + TypeScript |
+| Styling | Plain CSS (no UI framework) |
+| Build | Vite |
+| Local backend | Express.js (local editing only) |
+| Data | JSON files in version control |
+| Hosting | GitHub Pages + GitHub Actions |
 
-Build:
-
-```bash
-npm run build
-```
-
-Preview the production build:
-
-```bash
-npm run preview
-```
-
-## Deployment
-
-The GitHub Actions workflow at [.github/workflows/deploy.yml](.github/workflows/deploy.yml) runs on pushes to `main`, installs dependencies with `npm ci`, builds the Vite app, and publishes `dist` to the `gh-pages` branch.
-
-Vite is configured with `base: "/supernote-quote/"`, and routing is hash-based so the admin URL is safe on static hosting. The deployed admin screen cannot edit quotes because GitHub Pages cannot run the local Express backend.
-
-In the repository settings, GitHub Pages should use `Deploy from a branch` with the `gh-pages` branch and `/ (root)` folder. The workflow can also be started manually from the Actions tab with `workflow_dispatch`.
+---
 
 ## Project Structure
 
-- [src/App.tsx](src/App.tsx): public quote display, hash routing, and local admin UI
-- [src/App.css](src/App.css): public screen and admin styling
-- [src/quotes-api.ts](src/quotes-api.ts): frontend client for the local editing API
-- [server/index.ts](server/index.ts): local Express API server
-- [server/quotes-store.ts](server/quotes-store.ts): JSON-backed quote store
-- [server/config-store.ts](server/config-store.ts): JSON-backed display config store
-- [scripts/parse-supernote-quotes.ts](scripts/parse-supernote-quotes.ts): normalized quotes-to-JSON parser
-- [src/images/background.jpg](src/images/background.jpg): full-screen background image
-- [data/raw/Documents.txt](data/raw/Documents.txt): preserved raw highlights export
-- [data/raw/quotes_normalized.txt](data/raw/quotes_normalized.txt): manually curated parser input
-- [src/data/quotes.json](src/data/quotes.json): structured quote data deployed with the app
-- [src/data/config.json](src/data/config.json): display settings deployed with the app
+src/
+App.tsx              # Quote display, routing, admin UI
+App.css              # Public and admin styles
+quotes-api.ts        # Frontend client for local editing API
+data/
+quotes.json        # Structured quote data (deployed with app)
+config.json        # Display settings
+images/
+background.jpg     # Full-screen background
+server/
+index.ts             # Local Express API
+quotes-store.ts      # JSON read/write for quotes
+config-store.ts      # JSON read/write for display config
+scripts/
+parse-supernote-quotes.ts   # Highlights → JSON parser
+data/raw/
+Documents.txt               # Preserved raw Supernote export
+quotes_normalized.txt       # Manually curated parser input
+
+---
+
+## Commands
+
+```bash
+npm install          # Install dependencies
+npm run dev          # Public app only
+npm run dev:full     # Public app + local editor backend
+npm run parse:quotes # Re-parse highlights export → quotes.json
+npm run build        # Production build
+npm run preview      # Preview production build locally
+```
+
+---
+
+## Deployment Setup
+
+In your repository settings, set GitHub Pages to deploy from the `gh-pages` branch at `/ (root)`. The workflow also supports manual runs from the Actions tab via `workflow_dispatch`.
+
+Vite is configured with `base: "/supernote-quote/"` and routing is hash-based, so the admin route is safe on static hosting — it just shows a friendly message if the local backend isn't running.

@@ -81,17 +81,20 @@ function isQuoteVisibleByConfig(quote: Quote, config: AppConfig) {
 
 function formatQuoteForDisplay(text: string) {
   const spacedText = text.replace(/([,.:])(?=\S)/g, '$1 ')
-  const trimmedText = spacedText.trim()
-  const hasOpeningQuote = /^[“"‘'«„]/.test(trimmedText)
-  const hasClosingQuote = /[”"’'»][.!?…]*$/.test(trimmedText)
+  const displayText = spacedText
+    .trim()
+    .replace(/\s+([\u201d"\u2019'\u00bb])([.!?\u2026]*)$/u, '$1$2')
+    .replace(/([\u201d"\u2019'\u00bb])[.!?\u2026]+$/u, '$1')
+  const hasOpeningQuote = /^[\u201c"\u2018'\u00ab\u201e]/u.test(displayText)
+  const hasClosingQuote = /[\u201d"\u2019'\u00bb]$/u.test(displayText)
 
   if (hasOpeningQuote && hasClosingQuote) {
-    return spacedText
+    return displayText
   }
 
-  const openingQuote = hasOpeningQuote ? '' : '“'
-  const closingQuote = hasClosingQuote ? '' : '”'
-  return `${openingQuote}${spacedText}${closingQuote}`
+  const openingQuote = hasOpeningQuote ? '' : '\u201c'
+  const closingQuote = hasClosingQuote ? '' : '\u201d'
+  return `${openingQuote}${displayText}${closingQuote}`
 }
 
 function readInitialQuoteId(quotes: Quote[]) {
