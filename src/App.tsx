@@ -1,121 +1,181 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import quotesData from './data/quotes.json'
 import './App.css'
 
+type Language = 'all' | 'en' | 'de'
+
+type Quote = {
+  id: string
+  text: string
+  bookTitle: string
+  author: string
+  language: 'en' | 'de'
+  sourceFile: string
+}
+
+const quotes = quotesData as Quote[]
+const languageOptions: Array<{ value: Language; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'en', label: 'English' },
+  { value: 'de', label: 'Deutsch' },
+]
+
+const LANGUAGE_KEY = 'supernote-quote-language'
+const CURRENT_QUOTE_KEY = 'supernote-quote-current-id'
+
+function readStoredLanguage(): Language {
+  const stored = window.localStorage.getItem(LANGUAGE_KEY)
+  return stored === 'en' || stored === 'de' || stored === 'all' ? stored : 'all'
+}
+
+function pickRandomQuote(availableQuotes: Quote[], currentId?: string) {
+  if (availableQuotes.length === 0) {
+    return undefined
+  }
+
+  const candidates =
+    availableQuotes.length > 1 ? availableQuotes.filter((quote) => quote.id !== currentId) : availableQuotes
+  const index = Math.floor(Math.random() * candidates.length)
+  return candidates[index]
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(() => readStoredLanguage())
+  const [currentQuoteId, setCurrentQuoteId] = useState<string | undefined>(() => {
+    return window.localStorage.getItem(CURRENT_QUOTE_KEY) ?? undefined
+  })
+  const [history, setHistory] = useState<string[]>([])
+
+  const filteredQuotes = useMemo(() => {
+    if (selectedLanguage === 'all') {
+      return quotes
+    }
+
+    return quotes.filter((quote) => quote.language === selectedLanguage)
+  }, [selectedLanguage])
+
+  const currentQuote = useMemo(() => {
+    return filteredQuotes.find((quote) => quote.id === currentQuoteId)
+  }, [currentQuoteId, filteredQuotes])
+
+  const currentIndex = currentQuote ? filteredQuotes.findIndex((quote) => quote.id === currentQuote.id) : -1
+
+  useEffect(() => {
+    window.localStorage.setItem(LANGUAGE_KEY, selectedLanguage)
+  }, [selectedLanguage])
+
+  useEffect(() => {
+    if (currentQuoteId) {
+      window.localStorage.setItem(CURRENT_QUOTE_KEY, currentQuoteId)
+    } else {
+      window.localStorage.removeItem(CURRENT_QUOTE_KEY)
+    }
+  }, [currentQuoteId])
+
+  useEffect(() => {
+    if (filteredQuotes.length === 0) {
+      setCurrentQuoteId(undefined)
+      setHistory([])
+      return
+    }
+
+    if (!currentQuote) {
+      setCurrentQuoteId(pickRandomQuote(filteredQuotes)?.id)
+      setHistory([])
+    }
+  }, [currentQuote, filteredQuotes])
+
+  const showNextQuote = useCallback(() => {
+    const nextQuote = pickRandomQuote(filteredQuotes, currentQuote?.id)
+
+    if (!nextQuote) {
+      return
+    }
+
+    setHistory((previousHistory) => (currentQuote ? [...previousHistory, currentQuote.id] : previousHistory))
+    setCurrentQuoteId(nextQuote.id)
+  }, [currentQuote, filteredQuotes])
+
+  const showPreviousQuote = useCallback(() => {
+    setHistory((previousHistory) => {
+      const previousQuoteId = previousHistory.at(-1)
+
+      if (!previousQuoteId) {
+        return previousHistory
+      }
+
+      setCurrentQuoteId(previousQuoteId)
+      return previousHistory.slice(0, -1)
+    })
+  }, [])
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const target = event.target
+      const isTyping =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLSelectElement ||
+        target instanceof HTMLTextAreaElement
+
+      if (isTyping) {
+        return
+      }
+
+      if (event.key === 'ArrowRight' || event.key === ' ') {
+        event.preventDefault()
+        showNextQuote()
+      }
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        showPreviousQuote()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showNextQuote, showPreviousQuote])
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+    <main className="quote-app">
+      <header className="app-header">
+        <label className="language-select">
+          <span>Language</span>
+          <select value={selectedLanguage} onChange={(event) => setSelectedLanguage(event.target.value as Language)}>
+            {languageOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </header>
+
+      <button className="nav-button nav-button-previous" type="button" onClick={showPreviousQuote} disabled={!history.length}>
+        Previous
+      </button>
+
+      <section className="quote-stage" aria-live="polite">
+        {currentQuote ? (
+          <>
+            <p className="quote-text">{currentQuote.text}</p>
+            <p className="quote-source">
+              {currentQuote.bookTitle}
+              {currentQuote.author ? <span> by {currentQuote.author}</span> : null}
+            </p>
+            <p className="quote-counter">
+              {currentIndex + 1} / {filteredQuotes.length}
+            </p>
+          </>
+        ) : (
+          <p className="empty-state">No quotes available.</p>
+        )}
       </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <button className="nav-button nav-button-next" type="button" onClick={showNextQuote} disabled={!filteredQuotes.length}>
+        Next
+      </button>
+    </main>
   )
 }
 
