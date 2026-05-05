@@ -1,73 +1,50 @@
-# React + TypeScript + Vite
+# Supernote Quote
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A minimal full-screen quote display built from a Supernote highlights export. It shows one quote at a time in large, quiet typography, with the book title and author tucked underneath.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Random quote display with previous/next navigation
+- Language filtering for All, English, and Deutsch
+- Keyboard shortcuts: `ArrowRight` or `Space` for next, `ArrowLeft` for previous
+- Local persistence for selected language and current quote
+- Static-site friendly Vite build
+- Responsive, warm, uncluttered reading interface
 
-## React Compiler
+## Data Pipeline
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The raw Supernote export is preserved at [data/raw/Documents.txt](data/raw/Documents.txt). The parser at [scripts/parse-supernote-quotes.ts](scripts/parse-supernote-quotes.ts) transforms that export into [src/data/quotes.json](src/data/quotes.json).
 
-## Expanding the ESLint configuration
+During parsing, the script:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Reads repeated quote/source blocks from `Documents.txt`
+- Normalizes whitespace and repairs common export encoding artifacts
+- Cleans `.epub`, archive, hash, and ISBN-like metadata from book titles
+- Extracts authors from obvious metadata patterns
+- Detects English vs German with a practical heuristic
+- Removes exact duplicate quotes
+- Sorts the output by book title and quote text
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Local Setup
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run parse:quotes
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Build
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run lint
+npm run build
+npm run preview
 ```
+
+## Project Structure
+
+- [src/App.tsx](src/App.tsx): quote state, filtering, navigation, persistence, and shortcuts
+- [src/App.css](src/App.css): full-screen reading UI
+- [data/raw/Documents.txt](data/raw/Documents.txt): preserved raw highlights export
+- [src/data/quotes.json](src/data/quotes.json): structured quote data used by the app
+- [scripts/parse-supernote-quotes.ts](scripts/parse-supernote-quotes.ts): export-to-JSON parser
