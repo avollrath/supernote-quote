@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "import:quotes": "tsx scripts/import-quotes-to-supabase.ts",
     "parse:quotes": "tsx scripts/parse-supernote-quotes.ts",
     "preview": "vite preview",
     "server": "tsx server/index.ts",
