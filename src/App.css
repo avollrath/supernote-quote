@@ -51,6 +51,7 @@
   line-height: 1.12;
   text-wrap: pretty;
   text-shadow: 0 1px 20px rgba(252, 248, 239, 0.58);
+  white-space: pre-line;
 }
 
 .quote-text-medium {

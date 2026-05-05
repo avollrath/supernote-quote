@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path'
 type Quote = {
   id: string
   text: string
+  fullText?: string
   bookTitle: string
   author: string
   language: 'en' | 'de'
@@ -13,16 +14,17 @@ type Quote = {
 
 const RAW_PATH = resolve('data/raw/Documents.txt')
 const OUTPUT_PATH = resolve('src/data/quotes.json')
+const MAX_DISPLAY_LENGTH = 1200
 
 const archivePatterns = [
-  /\bAnna(?:'|’|â€™)?s Archive\b/gi,
+  /\bAnna(?:'|’|s)?s Archive\b/gi,
   /\bZ-?Library\b/gi,
   /\bz-?lib(?:\.org)?\b/gi,
   /\blibgen(?:\.\w+)?\b/gi,
 ]
 
 const germanCharactersPattern = /[äöüßÄÖÜ]/
-const strongGermanPattern = /\b(gewonheit|gewohnheit|veranderung|veränderung|gluck|glück|verhaltensänderung)\b/i
+const strongGermanPattern = /\b(gewohnheit|veränderung|glück|verhaltensänderung)\b/i
 const germanWords = new Set([
   'der',
   'die',
@@ -35,7 +37,6 @@ const germanWords = new Set([
   'ein',
   'eine',
   'mit',
-  'fur',
   'für',
   'auf',
   'dass',
@@ -48,25 +49,17 @@ const germanWords = new Set([
 
 function repairMojibake(value: string) {
   const commonRepairs: Record<string, string> = {
-    'â€™': '’',
-    'â€œ': '“',
-    'â€': '”',
-    'â€˜': '‘',
-    'â€“': '–',
-    'â€”': '—',
-    'â€¢': '•',
-    'â€¦': '…',
-    'Â»': '»',
-    'Â«': '«',
-    'Â ': ' ',
-    'Ã„': 'Ä',
-    'Ã–': 'Ö',
-    'Ãœ': 'Ü',
-    'Ã¤': 'ä',
-    'Ã¶': 'ö',
-    'Ã¼': 'ü',
-    'ÃŸ': 'ß',
-    'Ã©': 'é',
+    '\u00e2\u20ac\u2122': '’',
+    '\u00e2\u20ac\u0153': '“',
+    '\u00e2\u20ac\u009d': '”',
+    '\u00e2\u20ac\u02dc': '‘',
+    '\u00e2\u20ac\u201c': '–',
+    '\u00e2\u20ac\u201d': '—',
+    '\u00e2\u20ac\u00a2': '•',
+    '\u00e2\u20ac\u00a6': '…',
+    '\u00c2\u00bb': '»',
+    '\u00c2\u00ab': '«',
+    '\u00c2 ': ' ',
   }
 
   let repaired = value
@@ -74,16 +67,175 @@ function repairMojibake(value: string) {
     repaired = repaired.replaceAll(broken, fixed)
   }
 
-  if (repaired !== value) {
-    return repaired
+  if (/[ÃÂ]/.test(repaired)) {
+    try {
+      const bytes = Uint8Array.from([...repaired].map((char) => char.charCodeAt(0) & 0xff))
+      const decoded = new TextDecoder('utf-8', { fatal: false }).decode(bytes)
+      if (!decoded.includes('�')) {
+        repaired = decoded
+      }
+    } catch {
+      // Keep the best-effort repaired value.
+    }
   }
 
-  if (!/[ÃÂâ]/.test(value)) {
-    return value
+  return repaired
+}
+
+function protectPunctuation(text: string) {
+  const tokens: string[] = []
+  const protect = (match: string) => {
+    const token = `__TOKEN_${tokens.length}__`
+    tokens.push(match)
+    return token
   }
 
-  const bytes = Uint8Array.from([...value].map((char) => char.charCodeAt(0) & 0xff))
-  return new TextDecoder('utf-8').decode(bytes)
+  const protectedText = text
+    .replace(/\b(?:e\.g|i\.e|U\.S|U\.K|Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc)\./g, protect)
+    .replace(/\b(?:[A-Z]\.){2,}/g, protect)
+    .replace(/\b\d+\.\d+\b/g, protect)
+
+  return { protectedText, tokens }
+}
+
+function restorePunctuation(text: string, tokens: string[]) {
+  return tokens.reduce((current, token, index) => current.replaceAll(`__TOKEN_${index}__`, token), text)
+}
+
+export function normalizeText(text: string): string {
+  const lines = repairMojibake(text)
+    .replace(/\r\n/g, '\n')
+    .replace(/\u00a0/g, ' ')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  let joined = ''
+
+  for (const line of lines) {
+    if (!joined) {
+      joined = line
+      continue
+    }
+
+    const previousEndsCleanly = /[.!?;:…)"'”’»\]]$/.test(joined)
+    joined += previousEndsCleanly ? ` ${line}` : ` ${line}`
+  }
+
+  const { protectedText, tokens } = protectPunctuation(joined)
+  const spaced = protectedText
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .replace(/\s+([)\]”»])/g, '$1')
+    .replace(/([,;:!?])(?=\S)/g, '$1 ')
+    .replace(/\.([)"'”’»\]]*)(?=[A-ZÄÖÜ0-9“"‘])/g, '.$1 ')
+    .replace(/([)\]”»])(?=\d|[A-ZÄÖÜ])/g, '$1 ')
+    .replace(/(?<!M)([a-zäöüß])([A-ZÄÖÜ][a-zäöüß])/g, '$1 $2')
+    .replace(/\binthe\b/gi, 'in the')
+    .replace(/\bofthe\b/gi, 'of the')
+    .replace(/\btothe\b/gi, 'to the')
+    .replace(/\bandthe\b/gi, 'and the')
+    .replace(/\bforthe\b/gi, 'for the')
+    .replace(/\borweeks\b/gi, 'or weeks')
+    .replace(/\bormonths\b/gi, 'or months')
+    .replace(/\boryears\b/gi, 'or years')
+    .replace(/\bwhathe\b/gi, 'what he')
+    .replace(/\bunderstoodyour\b/gi, 'understood your')
+    .replace(/\bamedicine\b/gi, 'a medicine')
+    .replace(/\byouvery\b/gi, 'you very')
+    .replace(/\brelationshipshas\b/gi, 'relationships has')
+    .replace(/\bpleasepeople\b/gi, 'please people')
+    .replace(/\bfeelinauthentic\b/gi, 'feel inauthentic')
+    .replace(/\bThesecond\b/g, 'The second')
+    .replace(/\bwhichmeans\b/gi, 'which means')
+    .replace(/\bmeansconcentrated\b/gi, 'means concentrated')
+    .replace(/\blivingthings\b/gi, 'living things')
+    .replace(/\bthatabsurd\b/gi, 'that absurd')
+    .replace(/\basleepalways\b/gi, 'asleep always')
+    .replace(/\byou’resuffering\b/gi, 'you’re suffering')
+    .replace(/\bHowwonderful\b/g, 'How wonderful')
+    .replace(/\botherperson\b/gi, 'other person')
+    .replace(/\bcomplexinner\b/gi, 'complex inner')
+    .replace(/\bisthinking\b/gi, 'is thinking')
+    .replace(/\btoyourself\b/gi, 'to yourself')
+    .replace(/\bvocabularyaltogether\b/gi, 'vocabulary altogether')
+    .replace(/\bmakingthis\b/gi, 'making this')
+    .replace(/\byourparents\b/gi, 'your parents')
+    .replace(/\bsomethingbecause\b/gi, 'something because')
+    .replace(/\bfollowingquestions\b/gi, 'following questions')
+    .replace(/\bfromtoday\b/gi, 'from today')
+    .replace(/\bgoingthrough\b/gi, 'going through')
+    .replace(/\bsomethingthat\b/gi, 'something that')
+    .replace(/\bWhetherthey\b/g, 'Whether they')
+    .replace(/\s+/g, ' ')
+
+  return restorePunctuation(spaced, tokens)
+    .replace(/([A-Za-zÄÖÜäöüß])\u2019\s+(t|s|re|ve|ll|d|m)\b/gi, '$1\u2019$2')
+    .replace(/\u2019\s+(t|s|re|ve|ll|d|m)\b/gi, '\u2019$1')
+    .replace(/([,.!?;:])\s+([)”»])/g, '$1$2')
+    .replace(/(“[^”]{1,60}”)(?=[A-Za-zÄÖÜäöüß])/g, '$1 ')
+    .replace(/(‘[^’]{1,30}’)(?=[A-Za-zÄÖÜäöüß])/g, '$1 ')
+    .replace(/^[.,;:!?]\s+/, '')
+    .trim()
+}
+
+function splitSentences(text: string) {
+  return text
+    .split(/(?<=[.!?…]["”’»)]?)\s+(?=[A-ZÄÖÜ“"‘])/u)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean)
+}
+
+export function formatQuote(text: string): string {
+  if (text.length <= 200) {
+    return text
+  }
+
+  if (/[•]/.test(text)) {
+    const [header, ...items] = text.split(/\s*•\s*/).map((part) => part.trim()).filter(Boolean)
+    const lines = items.length > 0 ? [header, ...items.map((item) => `• ${item}`)] : [text]
+    if (lines.length <= 4) {
+      return lines.join('\n')
+    }
+
+    return [...lines.slice(0, 3), lines.slice(3).join(' ')].join('\n')
+  }
+
+  const numbered = text.replace(/\s+(\d+\.)\s+(?=[A-ZÄÖÜ])/g, '\n$1 ')
+  if (numbered.includes('\n')) {
+    const lines = numbered.split('\n')
+    if (lines.length <= 4) {
+      return numbered
+    }
+
+    return [...lines.slice(0, 3), lines.slice(3).join(' ')].join('\n')
+  }
+
+  const sentences = splitSentences(text)
+  if (sentences.length <= 1) {
+    return text
+  }
+
+  const maxLines = text.length > 700 ? 4 : text.length > 420 ? 3 : 2
+  const targetLength = Math.ceil(text.length / maxLines)
+  const lines: string[] = []
+  let currentLine = ''
+
+  for (const sentence of sentences) {
+    const nextLine = currentLine ? `${currentLine} ${sentence}` : sentence
+    if (currentLine && nextLine.length > targetLength && lines.length < maxLines - 1) {
+      lines.push(currentLine)
+      currentLine = sentence
+    } else {
+      currentLine = nextLine
+    }
+  }
+
+  if (currentLine) {
+    lines.push(currentLine)
+  }
+
+  return lines.slice(0, maxLines).join('\n')
 }
 
 function normalizeWhitespace(value: string) {
@@ -92,51 +244,6 @@ function normalizeWhitespace(value: string) {
     .replace(/\s+/g, ' ')
     .replace(/\s+([,.;:!?])/g, '$1')
     .trim()
-}
-
-function cleanQuoteText(value: string) {
-  return normalizeWhitespace(repairMojibake(value))
-    .replace(/^\.\s+(?=\p{Lu}|\p{N}|["“»])/u, '')
-    .replace(/^,\s+(?=\p{Lu}|\p{N}|["“»])/u, '')
-    .trim()
-}
-
-function cleanMetadataText(value: string) {
-  let cleaned = repairMojibake(value)
-    .replace(/^\[/, '')
-    .replace(/\]\(.+\)$/, '')
-    .replace(/\.epub$/i, '')
-    .replace(/_/g, ' ')
-
-  for (const pattern of archivePatterns) {
-    cleaned = cleaned.replace(pattern, '')
-  }
-
-  cleaned = cleaned
-    .replace(/\b97[89][-\d]{8,}\b/g, '')
-    .replace(/\b[0-9a-f]{24,}\b/gi, '')
-    .replace(/\s+-\s+\.\w+$/g, '')
-    .replace(/\[(.*?)\]/g, '$1')
-    .replace(/\(\s*\)/g, '')
-    .replace(/\s+--\s+$/g, '')
-    .replace(/\s{2,}/g, ' ')
-
-  return normalizeWhitespace(cleaned)
-}
-
-function titleCaseName(value: string) {
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) =>
-      part
-        .split('-')
-        .map((piece) =>
-          piece.length > 1 ? piece.charAt(0).toUpperCase() + piece.slice(1).toLowerCase() : piece.toUpperCase(),
-        )
-        .join('-'),
-    )
-    .join(' ')
 }
 
 function cleanAuthor(value: string) {
@@ -148,20 +255,75 @@ function cleanAuthor(value: string) {
     .replace(/[,.;:-]+$/g, '')
     .trim()
 
-  if (!author || /\d|archive|library|epub|isbn|edition/i.test(author)) {
+  const commaParts = author
+    .split(',')
+    .map((part) => normalizeWhitespace(part.replace(/\./g, '')))
+    .filter(Boolean)
+
+  if (commaParts.length === 2) {
+    author = `${commaParts[1]} ${commaParts[0]}`
+  } else if (commaParts.length === 4) {
+    author = `${commaParts[1]} ${commaParts[0]}, ${commaParts[2]} ${commaParts[3]}`
+  }
+
+  if (!author || /\d|archive|library|epub|isbn|edition|hamish|harmony|potter|publisher/i.test(author)) {
     return ''
   }
 
-  if (/^[A-Z][a-z]+,\s*[A-Z]/.test(author)) {
-    const [last, ...rest] = author.split(',')
-    author = `${rest.join(' ').trim()} ${last.trim()}`
-  }
-
-  return titleCaseName(author)
+  return author
+    .replace(/\s*,\s*/g, ', ')
+    .replace(/\s*\.\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
-function parseSource(sourceFile: string) {
-  const source = cleanMetadataText(sourceFile)
+function looksLikePerson(value: string) {
+  const words = value.trim().split(/\s+/)
+  return (
+    words.length >= 2 &&
+    words.length <= 4 &&
+    words.every((word) => /^(?:de|da|di|van|von|[A-ZÄÖÜ][A-Za-zÄÖÜäöüß.'-]+)$/.test(word))
+  )
+}
+
+function cleanTitle(value: string) {
+  let title = normalizeWhitespace(value)
+    .replace(/_/g, ': ')
+    .replace(/\bGerman Edition\b/gi, '')
+    .replace(/\([^)]*(?:edition|archive|library|publisher|press|\b\d{4}\b)[^)]*\)/gi, '')
+    .replace(/\[[^\]]*(?:edition|archive|library|z-lib|libgen)[^\]]*\]/gi, '')
+    .replace(/\b(?:19|20)\d{2}\b/g, '')
+    .replace(/\b97[89][-\d]{8,}\b/g, '')
+    .replace(/\b[0-9a-f]{24,}\b/gi, '')
+
+  for (const pattern of archivePatterns) {
+    title = title.replace(pattern, '')
+  }
+
+  title = title
+    .replace(/\s+-\s+\.\w+$/g, '')
+    .replace(/\s*[,;:]\s*$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+
+  if (/^Die 1-Methode\b/.test(title)) {
+    title = title.replace(/\s+Mit kleinen Gewohnheiten.*$/i, '')
+  }
+
+  return title.replace(/[()[\]\s.-]+$/g, '').trim()
+}
+
+export function normalizeSource(raw: string): { bookTitle: string; author: string } {
+  const sourceText = repairMojibake(raw)
+  let source = sourceText.match(/^\[(.*?)](?:\(.*\))?$/)?.[1] ?? sourceText
+
+  source = source
+    .replace(/\\/g, '/')
+    .split('/')
+    .at(-1) ?? source
+
+  source = source.replace(/\.epub$/i, '').replace(/_/g, ': ')
+
   let bookTitle = source
   let author = ''
 
@@ -175,35 +337,36 @@ function parseSource(sourceFile: string) {
     author = cleanAuthor(dashParts[1])
   } else {
     const byMatch = source.match(/^(.+?)\s+by\s+([^()[\]]+)(?:\s|$)/i)
-    const parentheticalMatches = [...source.matchAll(/\(([^()]+)\)/g)].map((match) => match[1])
+    const parentheticalMatches = [...source.matchAll(/\(([^()]+)\)/g)].map((match) => normalizeWhitespace(match[1]))
 
     if (byMatch) {
       bookTitle = byMatch[1]
       author = cleanAuthor(byMatch[2])
-    } else if (parentheticalMatches.length > 0) {
-      const candidate = parentheticalMatches.find((part) => {
-        const words = part.trim().split(/\s+/)
-        return words.length >= 2 && words.length <= 4 && !/edition|archive|library|z-lib|isbn|\d/i.test(part)
-      })
-
+    } else {
+      const candidate = parentheticalMatches.find((part) => looksLikePerson(part) && !/edition|archive|library|\d/i.test(part))
       if (candidate) {
         author = cleanAuthor(candidate)
         bookTitle = source.replace(`(${candidate})`, '')
+      } else {
+        const singleDashParts = source.split(/\s+-\s+/).map((part) => normalizeWhitespace(part)).filter(Boolean)
+        if (singleDashParts.length >= 2) {
+          const [first, ...rest] = singleDashParts
+          const last = rest.at(-1) ?? ''
+
+          if (looksLikePerson(first)) {
+            author = cleanAuthor(first)
+            bookTitle = rest.join(' - ')
+          } else if (last.includes(',') || looksLikePerson(last)) {
+            author = cleanAuthor(last)
+            bookTitle = [first, ...rest.slice(0, -1)].join(' - ')
+          }
+        }
       }
     }
   }
 
-  bookTitle = normalizeWhitespace(
-    bookTitle
-      .replace(/\bGerman Edition\b/gi, '')
-      .replace(/\([^)]*(?:Edition|Archive|Library|z-lib|libgen)[^)]*\)/gi, '')
-      .replace(/\[[^\]]*(?:Edition|Archive|Library|z-lib|libgen)[^\]]*\]/gi, '')
-      .replace(/\s+by\s+[^()[\]]+$/i, '')
-      .replace(/\s{2,}/g, ' '),
-  )
-
   return {
-    bookTitle: bookTitle.replace(/[()[\]\s.-]+$/g, '').trim(),
+    bookTitle: cleanTitle(bookTitle),
     author,
   }
 }
@@ -252,23 +415,31 @@ function parseExport(raw: string) {
       continue
     }
 
-    const text = cleanQuoteText(lines.slice(0, -1).join(' '))
-    if (!text || seenTexts.has(text)) {
+    const normalizedText = normalizeText(lines.slice(0, -1).join('\n'))
+    const formattedText = formatQuote(normalizedText)
+    const dedupeKey = normalizedText.toLowerCase()
+
+    if (!formattedText || seenTexts.has(dedupeKey)) {
       continue
     }
 
-    seenTexts.add(text)
+    seenTexts.add(dedupeKey)
     const sourceFile = repairMojibake(sourceLine)
-    const { bookTitle, author } = parseSource(sourceFile)
-
-    quotes.push({
-      id: createId(text, sourceFile),
-      text,
+    const { bookTitle, author } = normalizeSource(sourceFile)
+    const quote: Quote = {
+      id: createId(normalizedText, sourceFile),
+      text: formattedText.length > MAX_DISPLAY_LENGTH ? `${formattedText.slice(0, MAX_DISPLAY_LENGTH - 1).trim()}…` : formattedText,
       bookTitle,
       author,
-      language: detectLanguage(text),
+      language: detectLanguage(normalizedText),
       sourceFile,
-    })
+    }
+
+    if (formattedText.length > MAX_DISPLAY_LENGTH) {
+      quote.fullText = formattedText
+    }
+
+    quotes.push(quote)
   }
 
   return quotes.sort((a, b) => a.bookTitle.localeCompare(b.bookTitle) || a.text.localeCompare(b.text))
