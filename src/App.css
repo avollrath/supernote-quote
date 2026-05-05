@@ -250,7 +250,8 @@
 }
 
 .admin-public-link,
-.admin-actions button {
+.admin-actions button,
+.admin-range-setting button {
   border: 1px solid rgba(22, 21, 18, 0.16);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.5);
@@ -313,6 +314,17 @@
 .admin-range-setting input {
   width: 100%;
   accent-color: #161512;
+}
+
+.admin-range-setting button {
+  width: fit-content;
+  justify-self: end;
+  padding: 0.45rem 0.85rem;
+}
+
+.admin-range-setting button:disabled {
+  cursor: default;
+  opacity: 0.48;
 }
 
 .admin-search {

@@ -125,8 +125,10 @@ function AdminPage({
   const [searchTerm, setSearchTerm] = useState('')
   const [editingId, setEditingId] = useState<string | undefined>()
   const [draft, setDraft] = useState<QuoteUpdate>({ text: '', bookTitle: '', author: '' })
+  const [displayQuoteMaxLengthDraft, setDisplayQuoteMaxLengthDraft] = useState(() => configToSliderValue(config))
   const [saveError, setSaveError] = useState('')
-  const displayQuoteMaxLength = configToSliderValue(config)
+  const savedDisplayQuoteMaxLength = configToSliderValue(config)
+  const hasUnsavedDisplaySetting = displayQuoteMaxLengthDraft !== savedDisplayQuoteMaxLength
 
   const filteredQuotes = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -186,11 +188,11 @@ function AdminPage({
     }
   }
 
-  async function updateDisplayQuoteMaxLength(value: number) {
+  async function saveDisplayQuoteMaxLength() {
     setSaveError('')
 
     try {
-      await onConfigChange(sliderValueToConfig(value))
+      await onConfigChange(sliderValueToConfig(displayQuoteMaxLengthDraft))
     } catch (configError) {
       setSaveError(configError instanceof Error ? configError.message : 'Unable to save display settings.')
     }
@@ -229,23 +231,26 @@ function AdminPage({
             </div>
             <label className="admin-range-setting">
               <span>
-                {isUnlimitedDisplayQuoteLength(displayQuoteMaxLength)
+                {isUnlimitedDisplayQuoteLength(displayQuoteMaxLengthDraft)
                   ? 'Unlimited'
-                  : `${displayQuoteMaxLength} characters`}
+                  : `${displayQuoteMaxLengthDraft} characters`}
               </span>
               <input
                 type="range"
                 min={MIN_DISPLAY_QUOTE_LENGTH}
                 max={UNLIMITED_DISPLAY_QUOTE_LENGTH}
                 step="1"
-                value={displayQuoteMaxLength}
+                value={displayQuoteMaxLengthDraft}
                 aria-valuetext={
-                  isUnlimitedDisplayQuoteLength(displayQuoteMaxLength)
+                  isUnlimitedDisplayQuoteLength(displayQuoteMaxLengthDraft)
                     ? 'Unlimited'
-                    : `${displayQuoteMaxLength} characters`
+                    : `${displayQuoteMaxLengthDraft} characters`
                 }
-                onChange={(event) => void updateDisplayQuoteMaxLength(Number(event.target.value))}
+                onChange={(event) => setDisplayQuoteMaxLengthDraft(Number(event.target.value))}
               />
+              <button type="button" disabled={!hasUnsavedDisplaySetting} onClick={() => void saveDisplayQuoteMaxLength()}>
+                Save
+              </button>
             </label>
           </section>
 
@@ -504,6 +509,7 @@ function App() {
   if (route === '/admin') {
     return (
       <AdminPage
+        key={configToSliderValue(config)}
         quotes={adminQuotes}
         isLoading={isLoadingAdminQuotes}
         error={adminError}
