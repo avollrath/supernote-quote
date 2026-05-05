@@ -1,5 +1,7 @@
 # Sententia
 
+![Preview](src/images/preview.jpg)
+
 A minimal static quote display built from a Supernote highlights export.
 
 GitHub Pages hosts Sententia as static files. The deployed app reads the bundled [src/data/quotes.json](src/data/quotes.json) and [src/data/config.json](src/data/config.json) files only. Quote editing and display configuration are intentionally local: run the local backend, edit quotes or settings in the admin UI, then commit and push the changed JSON files.
