@@ -35,6 +35,20 @@ function getEnglishQuotes(quotes: Quote[]) {
   return quotes.filter((quote) => quote.language === 'en')
 }
 
+function formatQuoteForDisplay(text: string) {
+  const trimmedText = text.trim()
+  const hasOpeningQuote = /^[“"‘'«„]/.test(trimmedText)
+  const hasClosingQuote = /[”"’'»][.!?…]*$/.test(trimmedText)
+
+  if (hasOpeningQuote && hasClosingQuote) {
+    return text
+  }
+
+  const openingQuote = hasOpeningQuote ? '' : '“'
+  const closingQuote = hasClosingQuote ? '' : '”'
+  return `${openingQuote}${text}${closingQuote}`
+}
+
 function readInitialQuoteId(quotes: Quote[]) {
   const englishQuotes = getEnglishQuotes(quotes)
   const storedQuoteId = window.localStorage.getItem(CURRENT_QUOTE_KEY) ?? undefined
@@ -403,7 +417,7 @@ function App() {
       <section className="quote-stage" aria-live="polite">
         {currentQuote ? (
           <>
-            <p className={quoteLengthClass}>{currentQuote.text}</p>
+            <p className={quoteLengthClass}>{formatQuoteForDisplay(currentQuote.text)}</p>
             <p className="quote-source">
               {currentQuote.bookTitle}
               {currentQuote.author ? <span> - {currentQuote.author}</span> : null}
