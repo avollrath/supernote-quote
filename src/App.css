@@ -4,51 +4,11 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  padding: 5rem 7rem;
-}
-
-.app-header {
-  position: fixed;
-  inset-block-start: 1.5rem;
-  inset-inline-end: 1.5rem;
-  z-index: 2;
-}
-
-.language-select {
-  display: inline-flex;
-  gap: 0.25rem;
-  padding: 0.2rem;
-  border: 1px solid rgba(22, 21, 18, 0.12);
-  border-radius: 999px;
-  background: rgba(252, 248, 239, 0.78);
-  backdrop-filter: blur(10px);
-}
-
-.language-option,
-.nav-button {
-  font: inherit;
-  color: inherit;
-  border: 0;
-  cursor: pointer;
-}
-
-.language-option {
-  min-width: 4.25rem;
-  padding: 0.42rem 0.72rem;
-  border-radius: 999px;
-  background: transparent;
-  font-size: 0.78rem;
-  line-height: 1;
-  color: rgba(22, 21, 18, 0.56);
-}
-
-.language-option-active {
-  color: #161512;
-  background: rgba(22, 21, 18, 0.08);
+  padding: 4rem 6rem;
 }
 
 .quote-stage {
-  width: min(100%, 72rem);
+  width: min(84vw, 1200px);
   text-align: center;
 }
 
@@ -59,32 +19,32 @@
     Georgia,
     'Times New Roman',
     serif;
-  font-size: clamp(2.5rem, 8svh, 6.5rem);
-  line-height: 0.98;
-  text-wrap: balance;
-}
-
-.quote-text-medium {
-  font-size: clamp(2rem, 6svh, 4.8rem);
-  line-height: 1.04;
-}
-
-.quote-text-long {
-  font-size: clamp(1.35rem, 3.7svh, 3rem);
-  line-height: 1.16;
+  font-size: clamp(1.6rem, 3.5vw, 4rem);
+  line-height: 1.12;
   text-wrap: pretty;
 }
 
+.quote-text-medium {
+  font-size: clamp(1.45rem, 3vw, 3.2rem);
+  line-height: 1.15;
+}
+
+.quote-text-long {
+  font-size: clamp(1.1rem, 2vw, 2.15rem);
+  line-height: 1.18;
+  text-align: left;
+}
+
 .quote-source {
-  max-width: 42rem;
-  margin: 2rem auto 0;
+  max-width: min(76vw, 980px);
+  margin: 1.75rem auto 0;
   color: rgba(22, 21, 18, 0.58);
   font-size: 0.92rem;
   line-height: 1.4;
 }
 
 .quote-counter {
-  margin: 1.15rem 0 0;
+  margin: 1.1rem 0 0;
   color: rgba(22, 21, 18, 0.32);
   font-size: 0.78rem;
 }
@@ -103,15 +63,15 @@
   aspect-ratio: 1;
   display: grid;
   place-items: center;
+  border: 0;
   border-radius: 50%;
   background: rgba(22, 21, 18, 0.04);
   color: rgba(22, 21, 18, 0.38);
-  font-family:
-    Georgia,
+  font:
+    1.6rem/1 Georgia,
     'Times New Roman',
     serif;
-  font-size: 3rem;
-  line-height: 1;
+  cursor: pointer;
   transform: translateY(-50%);
   transition:
     background-color 160ms ease,
@@ -125,8 +85,7 @@
   color: rgba(22, 21, 18, 0.72);
 }
 
-.nav-button:focus-visible,
-.language-option:focus-visible {
+.nav-button:focus-visible {
   outline: 2px solid rgba(22, 21, 18, 0.42);
   outline-offset: 4px;
 }
@@ -146,28 +105,30 @@
 
 @media (max-width: 760px) {
   .quote-app {
-    padding: 5.5rem 1.25rem 6rem;
+    padding: 3rem 1.25rem 6rem;
   }
 
-  .app-header {
-    inset-inline: 0;
-    display: flex;
-    justify-content: center;
+  .quote-stage {
+    width: min(92vw, 1200px);
   }
 
   .quote-text {
-    font-size: clamp(2rem, 7svh, 4.5rem);
+    font-size: clamp(1.45rem, 6vw, 2.8rem);
+    line-height: 1.14;
   }
 
   .quote-text-medium {
-    font-size: clamp(1.65rem, 5svh, 3.25rem);
+    font-size: clamp(1.25rem, 5vw, 2.2rem);
+    line-height: 1.17;
   }
 
   .quote-text-long {
-    font-size: clamp(1.15rem, 3svh, 2rem);
+    font-size: clamp(1rem, 4vw, 1.45rem);
+    line-height: 1.2;
   }
 
   .quote-source {
+    max-width: 92vw;
     margin-top: 1.4rem;
     font-size: 0.85rem;
   }
@@ -176,7 +137,7 @@
     inset-block-start: auto;
     inset-block-end: 1rem;
     width: 2.75rem;
-    font-size: 2.3rem;
+    font-size: 1.25rem;
     transform: none;
   }
 }

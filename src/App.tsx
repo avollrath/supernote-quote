@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import quotesData from './data/quotes.json'
 import './App.css'
 
-type Language = 'all' | 'en' | 'de'
-
 type Quote = {
   id: string
   text: string
@@ -14,19 +12,9 @@ type Quote = {
 }
 
 const quotes = quotesData as Quote[]
-const languageOptions: Array<{ value: Language; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'en', label: 'English' },
-  { value: 'de', label: 'Deutsch' },
-]
-
-const LANGUAGE_KEY = 'supernote-quote-language'
+const englishQuotes = quotes.filter((quote) => quote.language === 'en')
 const CURRENT_QUOTE_KEY = 'supernote-quote-current-id'
-
-function readStoredLanguage(): Language {
-  const stored = window.localStorage.getItem(LANGUAGE_KEY)
-  return stored === 'en' || stored === 'de' || stored === 'all' ? stored : 'all'
-}
+const LEGACY_LANGUAGE_KEY = 'supernote-quote-language'
 
 function pickRandomQuote(availableQuotes: Quote[], currentId?: string) {
   if (availableQuotes.length === 0) {
@@ -39,48 +27,36 @@ function pickRandomQuote(availableQuotes: Quote[], currentId?: string) {
   return candidates[index]
 }
 
-function getFilteredQuotes(language: Language) {
-  if (language === 'all') {
-    return quotes
-  }
-
-  return quotes.filter((quote) => quote.language === language)
-}
-
-function readInitialQuoteId(language: Language) {
-  const availableQuotes = getFilteredQuotes(language)
+function readInitialQuoteId() {
   const storedQuoteId = window.localStorage.getItem(CURRENT_QUOTE_KEY) ?? undefined
 
-  if (storedQuoteId && availableQuotes.some((quote) => quote.id === storedQuoteId)) {
+  if (storedQuoteId && englishQuotes.some((quote) => quote.id === storedQuoteId)) {
     return storedQuoteId
   }
 
-  return pickRandomQuote(availableQuotes)?.id
+  return pickRandomQuote(englishQuotes)?.id
 }
 
 function App() {
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>(() => readStoredLanguage())
-  const [currentQuoteId, setCurrentQuoteId] = useState<string | undefined>(() => readInitialQuoteId(readStoredLanguage()))
+  const [currentQuoteId, setCurrentQuoteId] = useState<string | undefined>(() => readInitialQuoteId())
   const [history, setHistory] = useState<string[]>([])
 
-  const filteredQuotes = useMemo(() => getFilteredQuotes(selectedLanguage), [selectedLanguage])
-
   const currentQuote = useMemo(() => {
-    return filteredQuotes.find((quote) => quote.id === currentQuoteId)
-  }, [currentQuoteId, filteredQuotes])
+    return englishQuotes.find((quote) => quote.id === currentQuoteId)
+  }, [currentQuoteId])
 
-  const currentIndex = currentQuote ? filteredQuotes.findIndex((quote) => quote.id === currentQuote.id) : -1
+  const currentIndex = currentQuote ? englishQuotes.findIndex((quote) => quote.id === currentQuote.id) : -1
   const quoteLengthClass = currentQuote
-    ? currentQuote.text.length > 700
+    ? currentQuote.text.length > 620
       ? 'quote-text quote-text-long'
-      : currentQuote.text.length > 360
+      : currentQuote.text.length > 320
         ? 'quote-text quote-text-medium'
         : 'quote-text'
     : 'quote-text'
 
   useEffect(() => {
-    window.localStorage.setItem(LANGUAGE_KEY, selectedLanguage)
-  }, [selectedLanguage])
+    window.localStorage.removeItem(LEGACY_LANGUAGE_KEY)
+  }, [])
 
   useEffect(() => {
     if (currentQuoteId) {
@@ -91,7 +67,7 @@ function App() {
   }, [currentQuoteId])
 
   const showNextQuote = useCallback(() => {
-    const nextQuote = pickRandomQuote(filteredQuotes, currentQuote?.id)
+    const nextQuote = pickRandomQuote(englishQuotes, currentQuote?.id)
 
     if (!nextQuote) {
       return
@@ -99,7 +75,7 @@ function App() {
 
     setHistory((previousHistory) => (currentQuote ? [...previousHistory, currentQuote.id] : previousHistory))
     setCurrentQuoteId(nextQuote.id)
-  }, [currentQuote, filteredQuotes])
+  }, [currentQuote])
 
   const showPreviousQuote = useCallback(() => {
     setHistory((previousHistory) => {
@@ -113,21 +89,6 @@ function App() {
       return previousHistory.slice(0, -1)
     })
   }, [])
-
-  const chooseLanguage = useCallback(
-    (language: Language) => {
-      const nextQuotes = getFilteredQuotes(language)
-      const nextQuote =
-        currentQuote && nextQuotes.some((quote) => quote.id === currentQuote.id)
-          ? currentQuote
-          : pickRandomQuote(nextQuotes)
-
-      setSelectedLanguage(language)
-      setHistory([])
-      setCurrentQuoteId(nextQuote?.id)
-    },
-    [currentQuote],
-  )
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -158,21 +119,6 @@ function App() {
 
   return (
     <main className="quote-app">
-      <header className="app-header">
-        <div className="language-select" aria-label="Quote language">
-          {languageOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={option.value === selectedLanguage ? 'language-option language-option-active' : 'language-option'}
-              onClick={() => chooseLanguage(option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </header>
-
       <button
         className="nav-button nav-button-previous"
         type="button"
@@ -180,7 +126,7 @@ function App() {
         disabled={!history.length}
         aria-label="Previous quote"
       >
-        ‹
+        {'<'}
       </button>
 
       <section className="quote-stage" aria-live="polite">
@@ -189,14 +135,14 @@ function App() {
             <p className={quoteLengthClass}>{currentQuote.text}</p>
             <p className="quote-source">
               {currentQuote.bookTitle}
-              {currentQuote.author ? <span> · {currentQuote.author}</span> : null}
+              {currentQuote.author ? <span> - {currentQuote.author}</span> : null}
             </p>
             <p className="quote-counter">
-              {currentIndex + 1} / {filteredQuotes.length}
+              {currentIndex + 1} / {englishQuotes.length}
             </p>
           </>
         ) : (
-          <p className="empty-state">No quotes available.</p>
+          <p className="empty-state">No English quotes available.</p>
         )}
       </section>
 
@@ -204,10 +150,10 @@ function App() {
         className="nav-button nav-button-next"
         type="button"
         onClick={showNextQuote}
-        disabled={!filteredQuotes.length}
+        disabled={!englishQuotes.length}
         aria-label="Next quote"
       >
-        ›
+        {'>'}
       </button>
     </main>
   )
