@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { deleteQuote, fallbackQuotes, loadQuotes, updateQuote } from './quotes-api'
+import { deleteQuote, fallbackQuotes, loadQuotesWithFallback, updateQuote } from './quotes-api'
 import type { Quote, QuoteUpdate } from './types'
 import './App.css'
 
@@ -231,12 +231,13 @@ function App() {
   useEffect(() => {
     let cancelled = false
 
-    loadQuotes()
-      .then((loadedQuotes) => {
+    loadQuotesWithFallback()
+      .then((result) => {
         if (cancelled) {
           return
         }
 
+        const loadedQuotes = result.quotes
         const nextEnglishQuotes = getEnglishQuotes(loadedQuotes)
         setQuotes(loadedQuotes)
         setCurrentQuoteId((previousQuoteId) => {
@@ -247,6 +248,7 @@ function App() {
           return currentStillExists ? previousQuoteId : pickRandomQuote(nextEnglishQuotes)?.id
         })
         setHistory([])
+        setQuotesError(result.didFallback ? `Using static fallback because /api/quotes is unavailable: ${result.error}` : '')
       })
       .catch((error) => {
         if (!cancelled) {

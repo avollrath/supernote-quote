@@ -13,10 +13,22 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
 }
 
 export async function loadQuotes() {
+  return (await loadQuotesWithFallback()).quotes
+}
+
+export async function loadQuotesWithFallback() {
   try {
-    return await parseJsonResponse<Quote[]>(await fetch('/api/quotes'))
-  } catch {
-    return fallbackQuotes
+    return {
+      quotes: await parseJsonResponse<Quote[]>(await fetch('/api/quotes')),
+      didFallback: false,
+      error: '',
+    }
+  } catch (error) {
+    return {
+      quotes: fallbackQuotes,
+      didFallback: true,
+      error: error instanceof Error ? error.message : 'Unable to load quotes from the local API.',
+    }
   }
 }
 
