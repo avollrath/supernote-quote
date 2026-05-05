@@ -129,6 +129,11 @@ function AdminPage({
   const [saveError, setSaveError] = useState('')
   const savedDisplayQuoteMaxLength = configToSliderValue(config)
   const hasUnsavedDisplaySetting = displayQuoteMaxLengthDraft !== savedDisplayQuoteMaxLength
+  const englishQuoteCount = useMemo(() => getEnglishQuotes(quotes).length, [quotes])
+  const draftDisplayableQuoteCount = useMemo(
+    () => getDisplayableQuotes(quotes, sliderValueToConfig(displayQuoteMaxLengthDraft)).length,
+    [displayQuoteMaxLengthDraft, quotes],
+  )
 
   const filteredQuotes = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -227,6 +232,9 @@ function AdminPage({
               <p className="admin-setting-title">Displayed quote length</p>
               <p className="admin-setting-help">
                 Public quotes longer than this are hidden. Commit config.json after changing it.
+              </p>
+              <p className="admin-setting-count">
+                {draftDisplayableQuoteCount} / {englishQuoteCount} public quotes displayed
               </p>
             </div>
             <label className="admin-range-setting">

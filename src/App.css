@@ -293,10 +293,15 @@
   font-weight: 700;
 }
 
-.admin-setting-help {
+.admin-setting-help,
+.admin-setting-count {
   margin-top: 0.25rem;
   color: rgba(22, 21, 18, 0.58);
   font-size: 0.9rem;
+}
+
+.admin-setting-count {
+  color: rgba(22, 21, 18, 0.74);
 }
 
 .admin-range-setting {
