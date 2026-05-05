@@ -238,7 +238,8 @@
 }
 
 .admin-search,
-.quote-editor label {
+.quote-editor label,
+.admin-login label {
   display: grid;
   gap: 0.35rem;
   color: rgba(22, 21, 18, 0.62);
@@ -247,7 +248,8 @@
 
 .admin-search input,
 .quote-editor input,
-.quote-editor textarea {
+.quote-editor textarea,
+.admin-login input {
   width: 100%;
   border: 1px solid rgba(22, 21, 18, 0.18);
   border-radius: 0.35rem;
@@ -319,6 +321,38 @@
   display: grid;
   gap: 0.8rem;
   margin: 0;
+}
+
+.admin-login,
+.admin-session {
+  width: min(100%, 560px);
+  margin: 1.5rem auto;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.admin-login button,
+.admin-session button {
+  width: fit-content;
+  border: 1px solid rgba(22, 21, 18, 0.16);
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  background: rgba(255, 255, 255, 0.62);
+  color: #161512;
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-login button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.admin-session {
+  width: min(100%, 1100px);
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  color: rgba(22, 21, 18, 0.62);
 }
 
 @media (max-width: 760px) {

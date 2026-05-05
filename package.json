@@ -9,26 +9,19 @@
     "lint": "eslint .",
     "import:quotes": "tsx scripts/import-quotes-to-supabase.ts",
     "parse:quotes": "tsx scripts/parse-supernote-quotes.ts",
-    "preview": "vite preview",
-    "server": "tsx server/index.ts",
-    "dev:full": "concurrently \"npm:server\" \"vite --host 127.0.0.1 --port 5176 --strictPort\""
+    "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
-    "concurrently": "^9.2.1",
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
