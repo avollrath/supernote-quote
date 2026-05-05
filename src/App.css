@@ -165,3 +165,161 @@
     transform: none;
   }
 }
+
+.admin-app {
+  min-height: 100svh;
+  padding: 2rem;
+  color: #161512;
+  background: rgba(252, 248, 239, 0.96);
+}
+
+.admin-header,
+.admin-toolbar,
+.quote-admin-item,
+.quote-editor {
+  width: min(100%, 1100px);
+  margin-inline: auto;
+}
+
+.admin-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-eyebrow {
+  margin: 0 0 0.35rem;
+  color: rgba(22, 21, 18, 0.56);
+  font-size: 0.85rem;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 1;
+}
+
+.admin-public-link,
+.admin-actions button {
+  border: 1px solid rgba(22, 21, 18, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #161512;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-public-link {
+  padding: 0.6rem 0.9rem;
+  white-space: nowrap;
+}
+
+.admin-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.admin-search {
+  flex: 1;
+}
+
+.admin-search,
+.quote-editor label {
+  display: grid;
+  gap: 0.35rem;
+  color: rgba(22, 21, 18, 0.62);
+  font-size: 0.85rem;
+}
+
+.admin-search input,
+.quote-editor input,
+.quote-editor textarea {
+  width: 100%;
+  border: 1px solid rgba(22, 21, 18, 0.18);
+  border-radius: 0.35rem;
+  padding: 0.7rem 0.8rem;
+  color: #161512;
+  background: rgba(255, 255, 255, 0.62);
+  font: inherit;
+}
+
+.admin-count,
+.admin-state,
+.admin-error {
+  color: rgba(22, 21, 18, 0.62);
+}
+
+.admin-state,
+.admin-error {
+  width: min(100%, 1100px);
+  margin: 1rem auto;
+}
+
+.admin-error {
+  color: #8f1f18;
+}
+
+.admin-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.quote-admin-item {
+  padding: 1rem 0;
+  border-top: 1px solid rgba(22, 21, 18, 0.14);
+}
+
+.admin-quote-text {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.admin-quote-source,
+.admin-language {
+  margin: 0.55rem 0 0;
+  color: rgba(22, 21, 18, 0.62);
+  font-size: 0.9rem;
+}
+
+.admin-language {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.admin-actions button {
+  padding: 0.45rem 0.85rem;
+}
+
+.admin-actions .danger-button {
+  color: #8f1f18;
+}
+
+.quote-editor {
+  display: grid;
+  gap: 0.8rem;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .admin-app {
+    padding: 1.25rem;
+  }
+
+  .admin-header,
+  .admin-toolbar {
+    display: grid;
+  }
+}
