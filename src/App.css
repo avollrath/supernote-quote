@@ -209,6 +209,7 @@
 
 .admin-header,
 .admin-toolbar,
+.admin-settings,
 .quote-admin-item,
 .quote-editor,
 .admin-list,
@@ -221,6 +222,7 @@
 
 .admin-header,
 .admin-toolbar,
+.admin-settings,
 .quote-admin-item,
 .quote-editor {
   width: min(100%, 1100px);
@@ -269,6 +271,48 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.2rem;
+}
+
+.admin-settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 0;
+  border-block: 1px solid rgba(22, 21, 18, 0.12);
+}
+
+.admin-setting-title,
+.admin-setting-help {
+  margin: 0;
+}
+
+.admin-setting-title {
+  font-weight: 700;
+}
+
+.admin-setting-help {
+  margin-top: 0.25rem;
+  color: rgba(22, 21, 18, 0.58);
+  font-size: 0.9rem;
+}
+
+.admin-range-setting {
+  width: min(100%, 360px);
+  display: grid;
+  gap: 0.45rem;
+  color: rgba(22, 21, 18, 0.62);
+  font-size: 0.9rem;
+}
+
+.admin-range-setting span {
+  justify-self: end;
+}
+
+.admin-range-setting input {
+  width: 100%;
+  accent-color: #161512;
 }
 
 .admin-search {
@@ -399,7 +443,12 @@
   }
 
   .admin-header,
-  .admin-toolbar {
+  .admin-toolbar,
+  .admin-settings {
     display: grid;
+  }
+
+  .admin-range-setting {
+    width: 100%;
   }
 }

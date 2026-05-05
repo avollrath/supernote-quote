@@ -6,6 +6,10 @@ import './App.css'
 
 const CURRENT_QUOTE_KEY = 'sententia-current-id'
 const LEGACY_LANGUAGE_KEY = 'sententia-language'
+const DISPLAY_QUOTE_MAX_LENGTH_KEY = 'sententia-display-quote-max-length'
+const MIN_DISPLAY_QUOTE_LENGTH = 60
+const MAX_DISPLAY_QUOTE_LENGTH = 1000
+const UNLIMITED_DISPLAY_QUOTE_LENGTH = MAX_DISPLAY_QUOTE_LENGTH + 1
 
 function getRouteFromHash() {
   return window.location.hash.replace(/^#/, '') || '/'
@@ -35,8 +39,33 @@ function getEnglishQuotes(quotes: Quote[]) {
   return quotes.filter((quote) => quote.language === 'en')
 }
 
-function formatQuoteForDisplay(text: string) {
-  const spacedText = text.replace(/([,.:])(?=\S)/g, '$1 ')
+function isUnlimitedDisplayQuoteLength(value: number) {
+  return value >= UNLIMITED_DISPLAY_QUOTE_LENGTH
+}
+
+function readInitialDisplayQuoteMaxLength() {
+  const storedValue = Number(window.localStorage.getItem(DISPLAY_QUOTE_MAX_LENGTH_KEY))
+
+  if (Number.isFinite(storedValue)) {
+    return Math.min(
+      UNLIMITED_DISPLAY_QUOTE_LENGTH,
+      Math.max(MIN_DISPLAY_QUOTE_LENGTH, Math.round(storedValue)),
+    )
+  }
+
+  return UNLIMITED_DISPLAY_QUOTE_LENGTH
+}
+
+function truncateQuoteForDisplay(text: string, maxLength: number) {
+  if (isUnlimitedDisplayQuoteLength(maxLength) || text.length <= maxLength) {
+    return text
+  }
+
+  return `${text.slice(0, maxLength - 1).trim()}…`
+}
+
+function formatQuoteForDisplay(text: string, maxLength: number) {
+  const spacedText = truncateQuoteForDisplay(text.replace(/([,.:])(?=\S)/g, '$1 '), maxLength)
   const trimmedText = spacedText.trim()
   const hasOpeningQuote = /^[“"‘'«„]/.test(trimmedText)
   const hasClosingQuote = /[”"’'»][.!?…]*$/.test(trimmedText)
@@ -65,12 +94,23 @@ type AdminPageProps = {
   quotes: Quote[]
   isLoading: boolean
   error: string
+  displayQuoteMaxLength: number
   onReload: () => Promise<void>
   onUpdateQuote: (id: string, update: QuoteUpdate) => Promise<void>
   onDeleteQuote: (id: string) => Promise<void>
+  onDisplayQuoteMaxLengthChange: (value: number) => void
 }
 
-function AdminPage({ quotes, isLoading, error, onReload, onUpdateQuote, onDeleteQuote }: AdminPageProps) {
+function AdminPage({
+  quotes,
+  isLoading,
+  error,
+  displayQuoteMaxLength,
+  onReload,
+  onUpdateQuote,
+  onDeleteQuote,
+  onDisplayQuoteMaxLengthChange,
+}: AdminPageProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [editingId, setEditingId] = useState<string | undefined>()
   const [draft, setDraft] = useState<QuoteUpdate>({ text: '', bookTitle: '', author: '' })
@@ -146,6 +186,33 @@ function AdminPage({ quotes, isLoading, error, onReload, onUpdateQuote, onDelete
           Public screen
         </a>
       </header>
+
+      <section className="admin-settings">
+        <div>
+          <p className="admin-setting-title">Displayed quote length</p>
+          <p className="admin-setting-help">Limit public quote text in this browser.</p>
+        </div>
+        <label className="admin-range-setting">
+          <span>
+            {isUnlimitedDisplayQuoteLength(displayQuoteMaxLength)
+              ? 'Unlimited'
+              : `${displayQuoteMaxLength} characters`}
+          </span>
+          <input
+            type="range"
+            min={MIN_DISPLAY_QUOTE_LENGTH}
+            max={UNLIMITED_DISPLAY_QUOTE_LENGTH}
+            step="1"
+            value={displayQuoteMaxLength}
+            aria-valuetext={
+              isUnlimitedDisplayQuoteLength(displayQuoteMaxLength)
+                ? 'Unlimited'
+                : `${displayQuoteMaxLength} characters`
+            }
+            onChange={(event) => onDisplayQuoteMaxLengthChange(Number(event.target.value))}
+          />
+        </label>
+      </section>
 
       {error ? (
         <section className="admin-local-warning">
@@ -251,6 +318,7 @@ function App() {
   const [currentQuoteId, setCurrentQuoteId] = useState<string | undefined>(() => readInitialQuoteId(fallbackQuotes))
   const [history, setHistory] = useState<string[]>([])
   const [seenQuoteIds, setSeenQuoteIds] = useState<Set<string>>(() => new Set())
+  const [displayQuoteMaxLength, setDisplayQuoteMaxLength] = useState(readInitialDisplayQuoteMaxLength)
   const [isLoadingAdminQuotes, setIsLoadingAdminQuotes] = useState(false)
   const [adminError, setAdminError] = useState('')
 
@@ -288,6 +356,10 @@ function App() {
       window.localStorage.removeItem(CURRENT_QUOTE_KEY)
     }
   }, [currentQuoteId])
+
+  useEffect(() => {
+    window.localStorage.setItem(DISPLAY_QUOTE_MAX_LENGTH_KEY, String(displayQuoteMaxLength))
+  }, [displayQuoteMaxLength])
 
   const reloadAdminQuotes = useCallback(async () => {
     setIsLoadingAdminQuotes(true)
@@ -395,9 +467,11 @@ function App() {
         quotes={adminQuotes}
         isLoading={isLoadingAdminQuotes}
         error={adminError}
+        displayQuoteMaxLength={displayQuoteMaxLength}
         onReload={reloadAdminQuotes}
         onUpdateQuote={handleUpdateQuote}
         onDeleteQuote={handleDeleteQuote}
+        onDisplayQuoteMaxLengthChange={setDisplayQuoteMaxLength}
       />
     )
   }
@@ -418,7 +492,7 @@ function App() {
       <section className="quote-stage" aria-live="polite">
         {currentQuote ? (
           <>
-            <p className={quoteLengthClass}>{formatQuoteForDisplay(currentQuote.text)}</p>
+            <p className={quoteLengthClass}>{formatQuoteForDisplay(currentQuote.text, displayQuoteMaxLength)}</p>
             <p className="quote-source">
               {currentQuote.bookTitle}
               {currentQuote.author ? <span> - {currentQuote.author}</span> : null}
