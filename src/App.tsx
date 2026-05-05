@@ -59,6 +59,13 @@ function App() {
   }, [currentQuoteId, filteredQuotes])
 
   const currentIndex = currentQuote ? filteredQuotes.findIndex((quote) => quote.id === currentQuote.id) : -1
+  const quoteLengthClass = currentQuote
+    ? currentQuote.text.length > 700
+      ? 'quote-text quote-text-long'
+      : currentQuote.text.length > 360
+        ? 'quote-text quote-text-medium'
+        : 'quote-text'
+    : 'quote-text'
 
   useEffect(() => {
     window.localStorage.setItem(LANGUAGE_KEY, selectedLanguage)
@@ -139,29 +146,37 @@ function App() {
   return (
     <main className="quote-app">
       <header className="app-header">
-        <label className="language-select">
-          <span>Language</span>
-          <select value={selectedLanguage} onChange={(event) => setSelectedLanguage(event.target.value as Language)}>
-            {languageOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="language-select" aria-label="Quote language">
+          {languageOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={option.value === selectedLanguage ? 'language-option language-option-active' : 'language-option'}
+              onClick={() => setSelectedLanguage(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </header>
 
-      <button className="nav-button nav-button-previous" type="button" onClick={showPreviousQuote} disabled={!history.length}>
-        Previous
+      <button
+        className="nav-button nav-button-previous"
+        type="button"
+        onClick={showPreviousQuote}
+        disabled={!history.length}
+        aria-label="Previous quote"
+      >
+        ‹
       </button>
 
       <section className="quote-stage" aria-live="polite">
         {currentQuote ? (
           <>
-            <p className="quote-text">{currentQuote.text}</p>
+            <p className={quoteLengthClass}>{currentQuote.text}</p>
             <p className="quote-source">
               {currentQuote.bookTitle}
-              {currentQuote.author ? <span> by {currentQuote.author}</span> : null}
+              {currentQuote.author ? <span> · {currentQuote.author}</span> : null}
             </p>
             <p className="quote-counter">
               {currentIndex + 1} / {filteredQuotes.length}
@@ -172,8 +187,14 @@ function App() {
         )}
       </section>
 
-      <button className="nav-button nav-button-next" type="button" onClick={showNextQuote} disabled={!filteredQuotes.length}>
-        Next
+      <button
+        className="nav-button nav-button-next"
+        type="button"
+        onClick={showNextQuote}
+        disabled={!filteredQuotes.length}
+        aria-label="Next quote"
+      >
+        ›
       </button>
     </main>
   )
