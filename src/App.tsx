@@ -6,9 +6,6 @@ import './App.css'
 
 const CURRENT_QUOTE_KEY = 'supernote-quote-current-id'
 const LEGACY_LANGUAGE_KEY = 'supernote-quote-language'
-const backgroundStyle = {
-  '--background-image-url': `url(${backgroundImageUrl})`,
-} as React.CSSProperties
 
 function getRouteFromHash() {
   return window.location.hash.replace(/^#/, '') || '/'
@@ -23,6 +20,15 @@ function pickRandomQuote(availableQuotes: Quote[], currentId?: string) {
     availableQuotes.length > 1 ? availableQuotes.filter((quote) => quote.id !== currentId) : availableQuotes
   const index = Math.floor(Math.random() * candidates.length)
   return candidates[index]
+}
+
+function AppBackground() {
+  return (
+    <>
+      <img className="app-background" src={backgroundImageUrl} alt="" aria-hidden="true" />
+      <div className="app-background-overlay" aria-hidden="true" />
+    </>
+  )
 }
 
 function getEnglishQuotes(quotes: Quote[]) {
@@ -114,7 +120,8 @@ function AdminPage({ quotes, isLoading, error, onReload, onUpdateQuote, onDelete
   }
 
   return (
-    <main className="admin-app" style={backgroundStyle}>
+    <main className="admin-app">
+      <AppBackground />
       <header className="admin-header">
         <div>
           <p className="admin-eyebrow">Local JSON quote management</p>
@@ -228,6 +235,7 @@ function App() {
   const [adminQuotes, setAdminQuotes] = useState<Quote[]>([])
   const [currentQuoteId, setCurrentQuoteId] = useState<string | undefined>(() => readInitialQuoteId(fallbackQuotes))
   const [history, setHistory] = useState<string[]>([])
+  const [seenQuoteIds, setSeenQuoteIds] = useState<Set<string>>(() => new Set())
   const [isLoadingAdminQuotes, setIsLoadingAdminQuotes] = useState(false)
   const [adminError, setAdminError] = useState('')
 
@@ -237,7 +245,6 @@ function App() {
     return englishQuotes.find((quote) => quote.id === currentQuoteId)
   }, [currentQuoteId, englishQuotes])
 
-  const currentIndex = currentQuote ? englishQuotes.findIndex((quote) => quote.id === currentQuote.id) : -1
   const quoteLengthClass = currentQuote
     ? currentQuote.text.length > 620
       ? 'quote-text quote-text-long'
@@ -298,7 +305,25 @@ function App() {
   }, [])
 
   const showNextQuote = useCallback(() => {
-    const nextQuote = pickRandomQuote(englishQuotes, currentQuote?.id)
+    const seenIds = new Set(seenQuoteIds)
+
+    if (currentQuote) {
+      seenIds.add(currentQuote.id)
+    }
+
+    let candidates = englishQuotes.filter((quote) => !seenIds.has(quote.id))
+
+    if (candidates.length === 0) {
+      seenIds.clear()
+
+      if (currentQuote) {
+        seenIds.add(currentQuote.id)
+      }
+
+      candidates = englishQuotes.filter((quote) => quote.id !== currentQuote?.id)
+    }
+
+    const nextQuote = pickRandomQuote(candidates, currentQuote?.id)
 
     if (!nextQuote) {
       return
@@ -306,7 +331,8 @@ function App() {
 
     setHistory((previousHistory) => (currentQuote ? [...previousHistory, currentQuote.id] : previousHistory))
     setCurrentQuoteId(nextQuote.id)
-  }, [currentQuote, englishQuotes])
+    setSeenQuoteIds(new Set([...seenIds, nextQuote.id]))
+  }, [currentQuote, englishQuotes, seenQuoteIds])
 
   const showPreviousQuote = useCallback(() => {
     setHistory((previousHistory) => {
@@ -362,7 +388,8 @@ function App() {
   }
 
   return (
-    <main className="quote-app" style={backgroundStyle}>
+    <main className="quote-app">
+      <AppBackground />
       <button
         className="nav-button nav-button-previous"
         type="button"
@@ -381,9 +408,6 @@ function App() {
               {currentQuote.bookTitle}
               {currentQuote.author ? <span> - {currentQuote.author}</span> : null}
             </p>
-            <p className="quote-counter">
-              {currentIndex + 1} / {englishQuotes.length}
-            </p>
           </>
         ) : (
           <p className="empty-state">No English quotes available.</p>
@@ -399,6 +423,13 @@ function App() {
       >
         {'>'}
       </button>
+
+      <footer className="site-footer">
+        Sentia by{' '}
+        <a href="https://vollrath.dev/" target="_blank" rel="noreferrer">
+          vollrath.dev
+        </a>
+      </footer>
     </main>
   )
 }
