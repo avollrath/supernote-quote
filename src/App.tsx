@@ -6,10 +6,13 @@ import './App.css'
 
 const CURRENT_QUOTE_KEY = 'supernote-quote-current-id'
 const LEGACY_LANGUAGE_KEY = 'supernote-quote-language'
-const isAdminRoute = window.location.pathname === '/admin'
 const backgroundStyle = {
   '--background-image-url': `url(${backgroundImageUrl})`,
 } as React.CSSProperties
+
+function getRouteFromHash() {
+  return window.location.hash.replace(/^#/, '') || '/'
+}
 
 function pickRandomQuote(availableQuotes: Quote[], currentId?: string) {
   if (availableQuotes.length === 0) {
@@ -116,7 +119,7 @@ function AdminPage({ quotes, isLoading, error, onUpdateQuote, onDeleteQuote }: A
           <p className="admin-eyebrow">Local quote management</p>
           <h1>Supernote Quote Admin</h1>
         </div>
-        <a href="/" className="admin-public-link">
+        <a href="#/" className="admin-public-link">
           Public screen
         </a>
       </header>
@@ -207,6 +210,7 @@ function AdminPage({ quotes, isLoading, error, onUpdateQuote, onDeleteQuote }: A
 }
 
 function App() {
+  const [route, setRoute] = useState(() => getRouteFromHash())
   const [quotes, setQuotes] = useState<Quote[]>(fallbackQuotes)
   const [currentQuoteId, setCurrentQuoteId] = useState<string | undefined>(() => readInitialQuoteId(fallbackQuotes))
   const [history, setHistory] = useState<string[]>([])
@@ -227,6 +231,15 @@ function App() {
         ? 'quote-text quote-text-medium'
         : 'quote-text'
     : 'quote-text'
+
+  useEffect(() => {
+    function handleHashChange() {
+      setRoute(getRouteFromHash())
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
 
   useEffect(() => {
     window.localStorage.removeItem(LEGACY_LANGUAGE_KEY)
@@ -348,7 +361,7 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [showNextQuote, showPreviousQuote])
 
-  if (isAdminRoute) {
+  if (route === '/admin') {
     return (
       <AdminPage
         quotes={quotes}
