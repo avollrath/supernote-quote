@@ -1,24 +1,30 @@
-.quote-app {
+.quote-app,
+.admin-app {
   position: relative;
   min-height: 100svh;
   overflow: hidden;
+}
+
+.quote-app {
   display: grid;
   place-items: center;
   padding: 4rem 6rem;
 }
 
-.quote-app::before {
+.quote-app::before,
+.admin-app::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -2;
-  background-image: url('./images/background.jpg');
+  background-image: var(--background-image-url);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
-.quote-app::after {
+.quote-app::after,
+.admin-app::after {
   content: '';
   position: fixed;
   inset: 0;
@@ -167,10 +173,12 @@
 }
 
 .admin-app {
-  min-height: 100svh;
   padding: 2rem;
   color: #161512;
-  background: rgba(252, 248, 239, 0.96);
+}
+
+.admin-app::after {
+  background: rgba(252, 248, 239, 0.92);
 }
 
 .admin-header,

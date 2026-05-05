@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { deleteQuote, fallbackQuotes, loadQuotesWithFallback, updateQuote } from './quotes-api'
 import type { Quote, QuoteUpdate } from './types'
+import backgroundImageUrl from './images/background.jpg'
 import './App.css'
 
 const CURRENT_QUOTE_KEY = 'supernote-quote-current-id'
 const LEGACY_LANGUAGE_KEY = 'supernote-quote-language'
 const isAdminRoute = window.location.pathname === '/admin'
+const backgroundStyle = {
+  '--background-image-url': `url(${backgroundImageUrl})`,
+} as React.CSSProperties
 
 function pickRandomQuote(availableQuotes: Quote[], currentId?: string) {
   if (availableQuotes.length === 0) {
@@ -106,7 +110,7 @@ function AdminPage({ quotes, isLoading, error, onUpdateQuote, onDeleteQuote }: A
   }
 
   return (
-    <main className="admin-app">
+    <main className="admin-app" style={backgroundStyle}>
       <header className="admin-header">
         <div>
           <p className="admin-eyebrow">Local quote management</p>
@@ -357,7 +361,7 @@ function App() {
   }
 
   return (
-    <main className="quote-app">
+    <main className="quote-app" style={backgroundStyle}>
       <button
         className="nav-button nav-button-previous"
         type="button"
