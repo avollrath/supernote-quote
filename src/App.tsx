@@ -36,17 +36,18 @@ function getEnglishQuotes(quotes: Quote[]) {
 }
 
 function formatQuoteForDisplay(text: string) {
-  const trimmedText = text.trim()
+  const spacedText = text.replace(/([,.:])(?=\S)/g, '$1 ')
+  const trimmedText = spacedText.trim()
   const hasOpeningQuote = /^[“"‘'«„]/.test(trimmedText)
   const hasClosingQuote = /[”"’'»][.!?…]*$/.test(trimmedText)
 
   if (hasOpeningQuote && hasClosingQuote) {
-    return text
+    return spacedText
   }
 
   const openingQuote = hasOpeningQuote ? '' : '“'
   const closingQuote = hasClosingQuote ? '' : '”'
-  return `${openingQuote}${text}${closingQuote}`
+  return `${openingQuote}${spacedText}${closingQuote}`
 }
 
 function readInitialQuoteId(quotes: Quote[]) {
