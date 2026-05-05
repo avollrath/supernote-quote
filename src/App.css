@@ -3,35 +3,20 @@
   position: relative;
   min-height: 100svh;
   overflow: hidden;
+  background-image:
+    linear-gradient(rgba(252, 248, 239, 0.76), rgba(252, 248, 239, 0.68)),
+    radial-gradient(circle at 50% 50%, rgba(252, 248, 239, 0.45), rgba(252, 248, 239, 0.78)),
+    var(--background-image-url);
+  background-size: cover, cover, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .quote-app {
   display: grid;
   place-items: center;
   padding: 4rem 6rem;
-}
-
-.quote-app::before,
-.admin-app::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background-image: var(--background-image-url);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.quote-app::after,
-.admin-app::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background:
-    linear-gradient(rgba(252, 248, 239, 0.76), rgba(252, 248, 239, 0.68)),
-    radial-gradient(circle at 50% 50%, rgba(252, 248, 239, 0.45), rgba(252, 248, 239, 0.78));
 }
 
 .quote-stage {
@@ -178,8 +163,14 @@
   color: #161512;
 }
 
-.admin-app::after {
-  background: rgba(252, 248, 239, 0.92);
+.admin-app {
+  background-image:
+    linear-gradient(rgba(252, 248, 239, 0.92), rgba(252, 248, 239, 0.92)),
+    var(--background-image-url);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .admin-header,
