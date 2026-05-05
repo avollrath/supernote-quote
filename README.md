@@ -1,8 +1,8 @@
 # Supernote Quote
 
-A minimal production-ready quote display built from a Supernote highlights export.
+A minimal static quote display built from a Supernote highlights export.
 
-GitHub Pages hosts the static React app. Supabase provides production quote storage plus authenticated editing at `#/admin`. The bundled `src/data/quotes.json` remains a static fallback so the public quote screen still works if Supabase is not configured or temporarily unavailable.
+GitHub Pages hosts the public app as static files. The deployed app reads the bundled [src/data/quotes.json](src/data/quotes.json) file only. Quote editing is intentionally local: run the local backend, edit or delete quotes in the admin UI, then commit and push the changed JSON file.
 
 ## Public Quote Display
 
@@ -12,42 +12,29 @@ GitHub Pages hosts the static React app. Supabase provides production quote stor
 - Current quote persistence in `localStorage`
 - Full-screen `src/images/background.jpg` with a readable overlay
 - Averia Serif Libre typography via Google Fonts, with Georgia/serif fallbacks
-- Static fallback from `src/data/quotes.json`
+- Static data from `src/data/quotes.json`
 
-## Production Editing
+## Local Quote Editing
 
-Supabase stores quotes in the `public.quotes` table. Anyone can read quotes through RLS, while insert/update/delete are limited to authenticated users.
+Editing is available only while the local JSON-writing backend is running:
 
-The admin editor lives at:
+```bash
+npm run dev:full
+```
+
+Then open:
 
 ```text
-https://avollrath.github.io/supernote-quote/#/admin
+http://127.0.0.1:5176/supernote-quote/#/admin
 ```
 
-Create only trusted admin users in Supabase Auth. Every authenticated user can edit and delete quotes under the included schema.
+The admin UI calls the local API and writes changes directly to [src/data/quotes.json](src/data/quotes.json). After editing, commit and push that file so GitHub Pages deploys the updated static data.
 
-## Supabase Setup
+If the backend is not running, `#/admin` shows:
 
-1. Create a Supabase project.
-2. Run [supabase/schema.sql](supabase/schema.sql) in the Supabase SQL editor.
-3. Create one trusted admin user in Supabase Auth.
-4. Add GitHub repository secrets for the Pages workflow:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-5. For local development, create `.env.local`:
-
-```bash
-VITE_SUPABASE_URL=your-project-url
-VITE_SUPABASE_ANON_KEY=your-anon-or-publishable-key
+```text
+Admin editing is only available locally. Run npm run dev:full.
 ```
-
-6. Import the existing static quote data:
-
-```bash
-SUPABASE_URL=your-project-url SUPABASE_SERVICE_ROLE_KEY=your-service-role-key npm run import:quotes
-```
-
-Never commit the service role key. It bypasses RLS and is only for trusted server-side scripts such as the one-time import.
 
 ## Data Pipeline
 
@@ -71,10 +58,16 @@ Install dependencies:
 npm install
 ```
 
-Run locally:
+Run the public app only:
 
 ```bash
 npm run dev
+```
+
+Run the public app plus local quote editor backend:
+
+```bash
+npm run dev:full
 ```
 
 Parse the Supernote export:
@@ -83,33 +76,32 @@ Parse the Supernote export:
 npm run parse:quotes
 ```
 
-Import quotes into Supabase:
-
-```bash
-npm run import:quotes
-```
-
 Build:
 
 ```bash
 npm run build
 ```
 
+Preview the production build:
+
+```bash
+npm run preview
+```
+
 ## Deployment
 
 The GitHub Actions workflow at [.github/workflows/deploy.yml](.github/workflows/deploy.yml) runs on pushes to `main`, installs dependencies with `npm ci`, builds the Vite app, and deploys `dist` to GitHub Pages.
 
-Vite is configured with `base: "/supernote-quote/"`, and routing is hash-based so the admin screen works on static hosting.
+Vite is configured with `base: "/supernote-quote/"`, and routing is hash-based so the admin URL is safe on static hosting. The deployed admin screen cannot edit quotes because GitHub Pages cannot run the local Express backend.
 
 ## Project Structure
 
-- [src/App.tsx](src/App.tsx): public quote display, hash routing, Supabase-authenticated admin UI
+- [src/App.tsx](src/App.tsx): public quote display, hash routing, and local admin UI
 - [src/App.css](src/App.css): public screen and admin styling
-- [src/supabase.ts](src/supabase.ts): Supabase client setup
-- [src/quotes-service.ts](src/quotes-service.ts): typed Supabase quote reads/writes
-- [src/quotes-api.ts](src/quotes-api.ts): public quote loader with static fallback
-- [supabase/schema.sql](supabase/schema.sql): production database schema and RLS policies
-- [scripts/import-quotes-to-supabase.ts](scripts/import-quotes-to-supabase.ts): service-role import script
+- [src/quotes-api.ts](src/quotes-api.ts): frontend client for the local editing API
+- [server/index.ts](server/index.ts): local Express API server
+- [server/quotes-store.ts](server/quotes-store.ts): JSON-backed quote store
+- [scripts/parse-supernote-quotes.ts](scripts/parse-supernote-quotes.ts): export-to-JSON parser
 - [src/images/background.jpg](src/images/background.jpg): full-screen background image
 - [data/raw/Documents.txt](data/raw/Documents.txt): preserved raw highlights export
-- [src/data/quotes.json](src/data/quotes.json): structured fallback quote data
+- [src/data/quotes.json](src/data/quotes.json): structured quote data deployed with the app
