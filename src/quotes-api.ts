@@ -1,7 +1,9 @@
 import staticQuotes from './data/quotes.json'
-import type { Quote, QuoteUpdate } from './types'
+import staticConfig from './data/config.json'
+import type { AppConfig, Quote, QuoteUpdate } from './types'
 
 export const fallbackQuotes = staticQuotes as Quote[]
+export const fallbackConfig = staticConfig as AppConfig
 
 async function parseJsonResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -14,6 +16,22 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
 
 export async function loadAdminQuotes() {
   return parseJsonResponse<Quote[]>(await fetch('/api/quotes'))
+}
+
+export async function loadAdminConfig() {
+  return parseJsonResponse<AppConfig>(await fetch('/api/config'))
+}
+
+export async function updateConfig(update: AppConfig) {
+  return parseJsonResponse<AppConfig>(
+    await fetch('/api/config', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(update),
+    }),
+  )
 }
 
 export async function updateQuote(id: string, update: QuoteUpdate) {

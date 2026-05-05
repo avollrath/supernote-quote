@@ -2,7 +2,7 @@
 
 A minimal static quote display built from a Supernote highlights export.
 
-GitHub Pages hosts Sententia as static files. The deployed app reads the bundled [src/data/quotes.json](src/data/quotes.json) file only. Quote editing is intentionally local: run the local backend, edit or delete quotes in the admin UI, then commit and push the changed JSON file.
+GitHub Pages hosts Sententia as static files. The deployed app reads the bundled [src/data/quotes.json](src/data/quotes.json) and [src/data/config.json](src/data/config.json) files only. Quote editing and display configuration are intentionally local: run the local backend, edit quotes or settings in the admin UI, then commit and push the changed JSON files.
 
 ## Public Quote Display
 
@@ -13,6 +13,7 @@ GitHub Pages hosts Sententia as static files. The deployed app reads the bundled
 - Full-screen `src/images/background.jpg` with a readable overlay
 - Averia Serif Libre typography via Google Fonts, with Georgia/serif fallbacks
 - Static data from `src/data/quotes.json`
+- Static display settings from `src/data/config.json`
 
 ## Local Quote Editing
 
@@ -28,7 +29,9 @@ Then open:
 http://127.0.0.1:5176/supernote-quote/#/admin
 ```
 
-The admin UI calls the local API and writes changes directly to [src/data/quotes.json](src/data/quotes.json). After editing, commit and push that file so GitHub Pages deploys the updated static data.
+The admin UI calls the local API and writes changes directly to [src/data/quotes.json](src/data/quotes.json) and [src/data/config.json](src/data/config.json). After editing, commit and push those files so GitHub Pages deploys the updated static data.
+
+The admin setting for displayed quote length filters the public quote pool. Quotes longer than the selected maximum are hidden entirely. `Unlimited` is stored as `null` in `config.json`; finite values are integers from `60` through `1000`.
 
 If the backend is not running, `#/admin` shows:
 
@@ -108,8 +111,10 @@ Vite is configured with `base: "/supernote-quote/"`, and routing is hash-based s
 - [src/quotes-api.ts](src/quotes-api.ts): frontend client for the local editing API
 - [server/index.ts](server/index.ts): local Express API server
 - [server/quotes-store.ts](server/quotes-store.ts): JSON-backed quote store
+- [server/config-store.ts](server/config-store.ts): JSON-backed display config store
 - [scripts/parse-supernote-quotes.ts](scripts/parse-supernote-quotes.ts): normalized quotes-to-JSON parser
 - [src/images/background.jpg](src/images/background.jpg): full-screen background image
 - [data/raw/Documents.txt](data/raw/Documents.txt): preserved raw highlights export
 - [data/raw/quotes_normalized.txt](data/raw/quotes_normalized.txt): manually curated parser input
 - [src/data/quotes.json](src/data/quotes.json): structured quote data deployed with the app
+- [src/data/config.json](src/data/config.json): display settings deployed with the app

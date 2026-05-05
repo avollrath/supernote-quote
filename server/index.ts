@@ -1,5 +1,6 @@
 import cors from 'cors'
 import express from 'express'
+import { readConfig, validateConfigUpdate, writeConfig } from './config-store.ts'
 import { deleteQuote, readQuotes, updateQuote, validateQuoteUpdate } from './quotes-store.ts'
 
 const app = express()
@@ -13,6 +14,24 @@ app.get('/api/quotes', async (_request, response) => {
     response.json(await readQuotes())
   } catch (error) {
     response.status(500).json({ error: error instanceof Error ? error.message : 'Unable to read quotes.' })
+  }
+})
+
+app.get('/api/config', async (_request, response) => {
+  try {
+    response.json(await readConfig())
+  } catch (error) {
+    response.status(500).json({ error: error instanceof Error ? error.message : 'Unable to read config.' })
+  }
+})
+
+app.patch('/api/config', async (request, response) => {
+  try {
+    const config = validateConfigUpdate(request.body)
+    await writeConfig(config)
+    response.json(config)
+  } catch (error) {
+    response.status(400).json({ error: error instanceof Error ? error.message : 'Invalid config update.' })
   }
 })
 

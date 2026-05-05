@@ -8,3 +8,7 @@ export type Quote = {
 }
 
 export type QuoteUpdate = Pick<Quote, 'text' | 'bookTitle' | 'author'>
+
+export type AppConfig = {
+  displayQuoteMaxLength: number | null
+}
