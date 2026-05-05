@@ -10,7 +10,7 @@
     "parse:quotes": "tsx scripts/parse-supernote-quotes.ts",
     "preview": "vite preview",
     "server": "tsx server/index.ts",
-    "dev:full": "concurrently \"npm:server\" \"npm:dev\""
+    "dev:full": "concurrently \"npm:server\" \"vite --host 127.0.0.1 --port 5176 --strictPort\""
   },
   "dependencies": {
     "cors": "^2.8.6",
