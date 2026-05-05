@@ -4,10 +4,10 @@ import { resolve } from 'node:path'
 export type Quote = {
   id: string
   text: string
+  fullText?: string
   bookTitle: string
   author: string
   language: 'en' | 'de'
-  sourceFile: string
 }
 
 export type QuoteUpdate = {
@@ -27,10 +27,10 @@ function isQuote(value: unknown): value is Quote {
   return (
     typeof quote.id === 'string' &&
     typeof quote.text === 'string' &&
+    (quote.fullText === undefined || typeof quote.fullText === 'string') &&
     typeof quote.bookTitle === 'string' &&
     typeof quote.author === 'string' &&
-    (quote.language === 'en' || quote.language === 'de') &&
-    typeof quote.sourceFile === 'string'
+    (quote.language === 'en' || quote.language === 'de')
   )
 }
 

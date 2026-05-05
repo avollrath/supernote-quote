@@ -5,7 +5,6 @@ export type Quote = {
   bookTitle: string
   author: string
   language: 'en' | 'de'
-  sourceFile: string
 }
 
 export type QuoteUpdate = Pick<Quote, 'text' | 'bookTitle' | 'author'>

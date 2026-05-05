@@ -38,16 +38,23 @@ Admin editing is only available locally. Run npm run dev:full.
 
 ## Data Pipeline
 
-The raw Supernote export is preserved at [data/raw/Documents.txt](data/raw/Documents.txt). The parser at [scripts/parse-supernote-quotes.ts](scripts/parse-supernote-quotes.ts) transforms that export into [src/data/quotes.json](src/data/quotes.json).
+The raw Supernote export is preserved at [data/raw/Documents.txt](data/raw/Documents.txt). Quotes are manually cleaned into [data/raw/quotes_normalized.txt](data/raw/quotes_normalized.txt), then the parser at [scripts/parse-supernote-quotes.ts](scripts/parse-supernote-quotes.ts) transforms that curated file into [src/data/quotes.json](src/data/quotes.json).
 
-During parsing, the script:
+`quotes_normalized.txt` uses one strict format:
 
-- Reads repeated quote/source blocks from `Documents.txt`
-- Normalizes whitespace and repairs common export encoding artifacts
-- Cleans `.epub`, archive, hash, and ISBN-like metadata from book titles
-- Extracts authors from obvious metadata patterns
+```text
+Quote text
+Book Title - Author Name
+```
+
+Entries are separated by a blank line. During parsing, the script:
+
+- Reads exactly two lines per entry from `quotes_normalized.txt`
+- Splits the source line on the first ` - ` into title and author
+- Formats long quotes with readable line breaks
 - Detects English vs German and keeps the `language` field for future use
-- Removes exact duplicate quotes
+- Removes exact duplicate quote text
+- Truncates extremely long display text while preserving `fullText`
 - Sorts the output by book title and quote text
 
 ## Commands
@@ -101,7 +108,8 @@ Vite is configured with `base: "/supernote-quote/"`, and routing is hash-based s
 - [src/quotes-api.ts](src/quotes-api.ts): frontend client for the local editing API
 - [server/index.ts](server/index.ts): local Express API server
 - [server/quotes-store.ts](server/quotes-store.ts): JSON-backed quote store
-- [scripts/parse-supernote-quotes.ts](scripts/parse-supernote-quotes.ts): export-to-JSON parser
+- [scripts/parse-supernote-quotes.ts](scripts/parse-supernote-quotes.ts): normalized quotes-to-JSON parser
 - [src/images/background.jpg](src/images/background.jpg): full-screen background image
 - [data/raw/Documents.txt](data/raw/Documents.txt): preserved raw highlights export
+- [data/raw/quotes_normalized.txt](data/raw/quotes_normalized.txt): manually curated parser input
 - [src/data/quotes.json](src/data/quotes.json): structured quote data deployed with the app
