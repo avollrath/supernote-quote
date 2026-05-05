@@ -104,6 +104,8 @@ The GitHub Actions workflow at [.github/workflows/deploy.yml](.github/workflows/
 
 Vite is configured with `base: "/supernote-quote/"`, and routing is hash-based so the admin URL is safe on static hosting. The deployed admin screen cannot edit quotes because GitHub Pages cannot run the local Express backend.
 
+In the repository settings, GitHub Pages should use `GitHub Actions` as its build and deployment source. The deploy workflow also runs `actions/configure-pages` before uploading the static artifact, and it can be started manually from the Actions tab with `workflow_dispatch`.
+
 ## Project Structure
 
 - [src/App.tsx](src/App.tsx): public quote display, hash routing, and local admin UI
