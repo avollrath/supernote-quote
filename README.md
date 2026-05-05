@@ -1,8 +1,8 @@
-# Supernote Quote
+# Sententia
 
 A minimal static quote display built from a Supernote highlights export.
 
-GitHub Pages hosts the public app as static files. The deployed app reads the bundled [src/data/quotes.json](src/data/quotes.json) file only. Quote editing is intentionally local: run the local backend, edit or delete quotes in the admin UI, then commit and push the changed JSON file.
+GitHub Pages hosts Sententia as static files. The deployed app reads the bundled [src/data/quotes.json](src/data/quotes.json) file only. Quote editing is intentionally local: run the local backend, edit or delete quotes in the admin UI, then commit and push the changed JSON file.
 
 ## Public Quote Display
 

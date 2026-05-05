@@ -4,8 +4,8 @@ import type { Quote, QuoteUpdate } from './types'
 import backgroundImageUrl from './images/background.jpg'
 import './App.css'
 
-const CURRENT_QUOTE_KEY = 'supernote-quote-current-id'
-const LEGACY_LANGUAGE_KEY = 'supernote-quote-language'
+const CURRENT_QUOTE_KEY = 'sententia-current-id'
+const LEGACY_LANGUAGE_KEY = 'sententia-language'
 
 function getRouteFromHash() {
   return window.location.hash.replace(/^#/, '') || '/'
@@ -125,7 +125,7 @@ function AdminPage({ quotes, isLoading, error, onReload, onUpdateQuote, onDelete
       <header className="admin-header">
         <div>
           <p className="admin-eyebrow">Local JSON quote management</p>
-          <h1>Supernote Quote Admin</h1>
+          <h1>Sententia Admin</h1>
         </div>
         <a href="#/" className="admin-public-link">
           Public screen
@@ -425,7 +425,7 @@ function App() {
       </button>
 
       <footer className="site-footer">
-        Sentia by{' '}
+        Sententia by{' '}
         <a href="https://vollrath.dev/" target="_blank" rel="noreferrer">
           vollrath.dev
         </a>
