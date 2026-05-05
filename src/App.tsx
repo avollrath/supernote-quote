@@ -39,20 +39,31 @@ function pickRandomQuote(availableQuotes: Quote[], currentId?: string) {
   return candidates[index]
 }
 
+function getFilteredQuotes(language: Language) {
+  if (language === 'all') {
+    return quotes
+  }
+
+  return quotes.filter((quote) => quote.language === language)
+}
+
+function readInitialQuoteId(language: Language) {
+  const availableQuotes = getFilteredQuotes(language)
+  const storedQuoteId = window.localStorage.getItem(CURRENT_QUOTE_KEY) ?? undefined
+
+  if (storedQuoteId && availableQuotes.some((quote) => quote.id === storedQuoteId)) {
+    return storedQuoteId
+  }
+
+  return pickRandomQuote(availableQuotes)?.id
+}
+
 function App() {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(() => readStoredLanguage())
-  const [currentQuoteId, setCurrentQuoteId] = useState<string | undefined>(() => {
-    return window.localStorage.getItem(CURRENT_QUOTE_KEY) ?? undefined
-  })
+  const [currentQuoteId, setCurrentQuoteId] = useState<string | undefined>(() => readInitialQuoteId(readStoredLanguage()))
   const [history, setHistory] = useState<string[]>([])
 
-  const filteredQuotes = useMemo(() => {
-    if (selectedLanguage === 'all') {
-      return quotes
-    }
-
-    return quotes.filter((quote) => quote.language === selectedLanguage)
-  }, [selectedLanguage])
+  const filteredQuotes = useMemo(() => getFilteredQuotes(selectedLanguage), [selectedLanguage])
 
   const currentQuote = useMemo(() => {
     return filteredQuotes.find((quote) => quote.id === currentQuoteId)
@@ -79,19 +90,6 @@ function App() {
     }
   }, [currentQuoteId])
 
-  useEffect(() => {
-    if (filteredQuotes.length === 0) {
-      setCurrentQuoteId(undefined)
-      setHistory([])
-      return
-    }
-
-    if (!currentQuote) {
-      setCurrentQuoteId(pickRandomQuote(filteredQuotes)?.id)
-      setHistory([])
-    }
-  }, [currentQuote, filteredQuotes])
-
   const showNextQuote = useCallback(() => {
     const nextQuote = pickRandomQuote(filteredQuotes, currentQuote?.id)
 
@@ -115,6 +113,21 @@ function App() {
       return previousHistory.slice(0, -1)
     })
   }, [])
+
+  const chooseLanguage = useCallback(
+    (language: Language) => {
+      const nextQuotes = getFilteredQuotes(language)
+      const nextQuote =
+        currentQuote && nextQuotes.some((quote) => quote.id === currentQuote.id)
+          ? currentQuote
+          : pickRandomQuote(nextQuotes)
+
+      setSelectedLanguage(language)
+      setHistory([])
+      setCurrentQuoteId(nextQuote?.id)
+    },
+    [currentQuote],
+  )
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -152,7 +165,7 @@ function App() {
               key={option.value}
               type="button"
               className={option.value === selectedLanguage ? 'language-option language-option-active' : 'language-option'}
-              onClick={() => setSelectedLanguage(option.value)}
+              onClick={() => chooseLanguage(option.value)}
             >
               {option.label}
             </button>

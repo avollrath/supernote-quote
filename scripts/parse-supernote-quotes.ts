@@ -21,8 +21,30 @@ const archivePatterns = [
   /\blibgen(?:\.\w+)?\b/gi,
 ]
 
-const germanPattern =
-  /[äöüßÄÖÜ]|\b(der|die|das|und|nicht|gewonheit|gewohnheit|veranderung|veränderung|gluck|glück|sich|sie|ist|ein|eine|mit|für|fur|auf|dass|daß|werden|haben|menschen|verhalten)\b/i
+const germanCharactersPattern = /[äöüßÄÖÜ]/
+const strongGermanPattern = /\b(gewonheit|gewohnheit|veranderung|veränderung|gluck|glück|verhaltensänderung)\b/i
+const germanWords = new Set([
+  'der',
+  'die',
+  'das',
+  'und',
+  'nicht',
+  'sich',
+  'sie',
+  'ist',
+  'ein',
+  'eine',
+  'mit',
+  'fur',
+  'für',
+  'auf',
+  'dass',
+  'daß',
+  'werden',
+  'haben',
+  'menschen',
+  'verhalten',
+])
 
 function repairMojibake(value: string) {
   const commonRepairs: Record<string, string> = {
@@ -187,7 +209,13 @@ function parseSource(sourceFile: string) {
 }
 
 function detectLanguage(text: string): 'en' | 'de' {
-  return germanPattern.test(text) ? 'de' : 'en'
+  if (germanCharactersPattern.test(text) || strongGermanPattern.test(text)) {
+    return 'de'
+  }
+
+  const words = text.toLowerCase().match(/\p{L}+/gu) ?? []
+  const germanWordHits = words.filter((word) => germanWords.has(word)).length
+  return germanWordHits >= 3 ? 'de' : 'en'
 }
 
 function createId(text: string, sourceFile: string) {
