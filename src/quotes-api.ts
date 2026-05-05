@@ -1,4 +1,5 @@
 import staticQuotes from './data/quotes.json'
+import { fetchSupabaseQuotes } from './quotes-service'
 import type { Quote, QuoteUpdate } from './types'
 
 export const fallbackQuotes = staticQuotes as Quote[]
@@ -19,7 +20,7 @@ export async function loadQuotes() {
 export async function loadQuotesWithFallback() {
   try {
     return {
-      quotes: await parseJsonResponse<Quote[]>(await fetch('/api/quotes')),
+      quotes: await fetchSupabaseQuotes(),
       didFallback: false,
       error: '',
     }
